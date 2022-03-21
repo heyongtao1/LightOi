@@ -11,53 +11,26 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <strings.h>
-#include<arpa/inet.h>
+#include <arpa/inet.h>
 #include "Reactor.h"
+#include "util.h"
 namespace LightOi
 {
-	//----------------------------------------
-	int setnonblocking(int fd)
-	{
-		int old_opt = fcntl(fd,F_GETFL);
-		int new_opt = old_opt | O_NONBLOCK;
-		fcntl(fd,F_SETFL,new_opt);
-		return old_opt;
-	}
-	void addfd(int epollfd,int fd, bool one_shot)
-	{
-		epoll_event event;
-		event.data.fd = fd;
-		event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-		if(one_shot){
-			event.events |= EPOLLONESHOT;
-		}
-		epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&event);
-		setnonblocking(fd);
-	}
-	
-	void removefd(int epollfd,int fd)
-	{
-		epoll_ctl(epollfd,EPOLL_CTL_DEL,fd,0);
-		close(fd);
-	}
-
-	void modfd(int epollfd,int fd,int ev)
-	{
-		epoll_event event;
-		event.data.fd = fd;
-		event.events = EPOLLONESHOT | EPOLLET | EPOLLRDHUP | ev;
-		epoll_ctl(epollfd,EPOLL_CTL_MOD,fd,&event);
-	}
-	//--------------------------------------
 	void Reactor::EPollstart()
 	{
-		epfd = epoll_create(5);
+		epfd = epoll_create(200);
 		assert(epfd != -1);
 	}
 	
 	void Reactor::EPollstop()
 	{
 		close(epfd);
+	}
+	
+	void Reactor::stop()
+	{
+		EPollstop();
+		stopLoop();
 	}
 	
 	void Reactor::stopLoop()
@@ -67,30 +40,14 @@ namespace LightOi
 	
 	int MainReactor::listens()
 	{
-		//TcpSocket socket{};
-		//bool success = socket.listen(_address);
-		
-		struct sockaddr_in address;
-		bzero(&address, sizeof(address));
-		address.sin_family = AF_INET;
-		address.sin_port = htons(_port);
-		address.sin_addr.s_addr = htons(INADDR_ANY);
+		serverSocket = (ServerSocketImpl*)SocketFactory::createServerSocket(_port);
 
-		int listenfd = socket(AF_INET,SOCK_STREAM,0);
-		assert(listenfd >= 0);
-		struct linger tmp = {1,0};
-		setsockopt(listenfd,SOL_SOCKET,SO_LINGER,&tmp,sizeof(tmp));
-
-		int ret = 0;
-		ret = bind(listenfd, (struct sockaddr*)&address, sizeof(address));
-		assert(ret != -1);
-
-		ret = listen(listenfd,5);
+		int ret = serverSocket->listen(128);
 		assert(ret >= 0);
 	
 		//listen不能注册EPOLLONESHOT事件，否则只能处理一个客户连接
-		addfd(epfd, listenfd, false);
-		return listenfd;
+		epoll_util::addfd(epfd, serverSocket->fd, false);
+		return serverSocket->fd;
 	}
 	
 	void MainReactor::loop()
@@ -103,13 +60,14 @@ namespace LightOi
 			/* acceptor handle new connect , if accept new connect success 
 			   to NewConnectCallback(newconfd)
 			*/
-			_acceptor.handleAccept(listenfd,number);
+			_acceptor.handleAccept(serverSocket,number);
 		}
+		SocketFactory::destroy(serverSocket);
 	}
 	
-	void MainReactor::NewConnectCallback(int newconfd)
+	void MainReactor::NewConnectCallback(SocketImpl*& clientSok)
 	{
-		_disPatchcb(newconfd);
+		_disPatchcb(clientSok);
 	}
 	
 

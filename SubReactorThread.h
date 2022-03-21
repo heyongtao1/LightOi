@@ -9,6 +9,8 @@
 #include <pthread.h>
 #include <exception>
 #include "Reactor.h"
+#include "socketimpl.h"
+using namespace socketfactory;
 /*
 	模板类并非真正的类，模板类的实现和定义必须在同一头文件中
 */
@@ -43,9 +45,19 @@ namespace LightOi
 		{
 			_subReactor.loop();
 		}
+		
+		void stopWork()
+		{
+			_subReactor.stop();
+		}
+		
 		// 接口 ：新客户连接加入到子Reactor进行监听活动事件
-		void addNewConnectEvent(int newConnfd)
-		{ _subReactor.joinEPollEventList(newConnfd); }
+		void addNewConnectEvent(SocketImpl*& clientSok)
+		{ _subReactor.joinEPollEvent(clientSok); }
+		
+		int getActiveNumber() { return _subReactor.getActiveNumber(); }
+		
+		int getTotalActiveNumber() { return _subReactor.getTotalActiveNumber(); }
 	private:
 		pthread_t _thread;
 		

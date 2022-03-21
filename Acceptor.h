@@ -8,10 +8,12 @@
 #define _ACCEPTOR_H
 #include <iostream>
 #include <functional>
+#include "socketimpl.h"
+using namespace socketfactory;
 namespace LightOi
 {
 	class Acceptor{
-		typedef std::function<void(int)> NewConnectCallback;
+		typedef std::function<void(SocketImpl*&)> NewConnectCallback;
 	public:
 		Acceptor(){}
 		
@@ -19,7 +21,7 @@ namespace LightOi
 	public:
 		void setNewConnectCallbackFun(NewConnectCallback cb) { _newConcb = cb; }
 		
-		void handleAccept(int listenfd,int acceptnumber);
+		void handleAccept(ServerSocketImpl*& serverSok,int acceptnumber);
 	private:
 		NewConnectCallback _newConcb;
 	};

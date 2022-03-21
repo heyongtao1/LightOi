@@ -7,7 +7,7 @@
 #include<exception>
 #include<pthread.h>
 #include"mylock.h"
-#define MAX_PTHREAD_NUMBER 10
+#define MAX_PTHREAD_NUMBER 50
 using namespace std;
  
 template<typename T>
@@ -109,5 +109,6 @@ void threadpool<T> :: run()
         }
         request->process();//执行工作队列
     }
+	
 }
 #endif
