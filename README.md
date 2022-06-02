@@ -1,6 +1,6 @@
 # LightOi
 基于Linux的多线程Reactor + one thread per  loop组合模式的轻量级服务器
-方式：IO复用EPOLL、计算线程池、SubReactor线程池、互斥锁、信号量等。
+采用了高效的半同步/半异步模式、Reactor 事件处理模式、epoll 的 I/O 复用等
 整体使用了模块化组合，分为四大模块：
 1、Rector模块（MainReactor、SubReactor均继承Reactor基类）
 MainReactor类：称为主Reactor，只负责监听新客户连接事件。
