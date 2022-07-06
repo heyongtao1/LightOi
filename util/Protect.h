@@ -19,7 +19,7 @@ public:
 	}
 	friend class Singleton<Protect>;
 private:
-	unordered_set<string> blacklist;
+	unordered_set<string> blacklist; 
 };
 
 #endif
