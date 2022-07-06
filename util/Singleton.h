@@ -1,7 +1,7 @@
 #ifndef _SINGLETON_H
 #define _SINGLETON_H
 #include <iostream>
-
+ 
 //通用：模板单例
 template<typename T>
 class Singleton
