@@ -1,12 +1,23 @@
 #include <iostream>
 #include <memory>
-#include "TcpServer.h"
+#include <csignal>
+#include "Llib/Logger.h"
+#include "LReactor/TcpServer.h"
+#include <unistd.h>
 using namespace std;
 
+LightOi::TcpServer server("172.22.63.3", 20000);
+
+void term(int signal) {
+	//server.printTestInfo();
+	LogInfo(NULL);
+	server.stop();
+	sleep(5);
+}
 
 int main(int argc, char **argv)
 {
-	LightOi::TcpServer server("192.168.206.129", 8888);
+	signal(SIGINT, term);
 	server.start();
 	return 0;
 }
