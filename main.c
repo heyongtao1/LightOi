@@ -6,7 +6,7 @@
 #include <unistd.h>
 using namespace std;
 
-LightOi::TcpServer server("172.22.63.3", 20000);
+LightOi::TcpServer server("172.22.63.3", 9999);
 
 void term(int signal) {
 	//server.printTestInfo();

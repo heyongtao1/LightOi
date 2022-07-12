@@ -48,6 +48,58 @@ int SocketImpl::write(void* buf, size_t len) {
          perror("SocketImpl::write");
      return ret;
 }
+
+int SocketImpl::send_data(const void* data, int len)
+{
+    int ret = 0;
+    int offset = 0;
+    while (len) { // 循环写数据，直至全部写入
+        ret = send(fd, data + offset, len, 0);
+        if (ret == 0) {
+            if (errno != EAGAIN) {
+                return -1;
+            }
+        }
+        else if (ret == -1) {
+            if (errno != EAGAIN) {
+                return -1;
+            }
+            else {
+                ret = 0;
+            }
+        }
+        len -= ret;
+        offset += ret;
+    }
+
+    return offset;
+}
+
+int SocketImpl::recv_data(void* data, int len)
+{
+    int ret = 0;
+    int offset = 0;
+    while (len) { // 循环读数据，直至全部读完
+        ret = recv(fd, data + offset, len, 0);
+        if (ret == 0) {
+            if (errno != EAGAIN) {
+                return -1;
+            }
+        }
+        else if (ret == -1) {
+            if (errno != EAGAIN) {
+                return -1;
+            }
+            else {
+                ret = 0;
+            }
+        }
+        len -= ret;
+        offset += ret;
+    }
+
+    return offset;
+}
  
 int SocketImpl::close() {
      if (this->fd > 0) {
