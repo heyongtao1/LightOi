@@ -33,9 +33,13 @@ namespace HYT{
 		LogInfo(NULL);
 		//获取包头,包体为int的包体长度
 		int head = buffer.readPackageHead();
+        LogInfo(NULL);
 		//获取包体
 		const char* data = buffer.readPackageBody(head);
+        LogInfo(NULL);
+        cout << "data = " << data << endl;
 		char* ret_data = Singleton<Message>::getInstance().messageAnalysis(data);
+        LogInfo(NULL);
 		if(ret_data == NULL)
 		{
 			//恢复可读状态

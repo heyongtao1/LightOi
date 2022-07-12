@@ -10,7 +10,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "socketfactory.h"
- 
+#include <iostream>
+#include <string.h>
 using namespace socketfactory;
 
 /*
@@ -30,7 +31,9 @@ public:
      int cconnect(int sockfd, const struct sockaddr_in *addr, socklen_t addrlen);
      SocketImpl();
      virtual ~SocketImpl();
- 
+public:
+     int recv_data(void* data, int len);
+     int send_data(const void* data, int len);
 public:
      int fd;
      struct sockaddr_in  address;

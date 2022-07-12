@@ -34,13 +34,14 @@ namespace LightOi
 		SocketImpl* client = serverSok->accept();
 		char* clientIp = epoll_util::IP_tostring(client->address);
 		
+        /*
 		if(Singleton<Protect>::getInstance().isExistence(string(clientIp)))
 		{
 			cout << "黑名单 ip " <<endl;
 			SocketFactory::destroy(client);
 			return ;
 		}
-		
+		*/
 		LogRun("%s",clientIp);
 		
 		if(client->fd < 0)
