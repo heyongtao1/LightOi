@@ -126,15 +126,15 @@ public:
 		int hasRecv = 0;
 		pkgH mpkgH;
 		memset(mpkgH.confirm,0,sizeof(mpkgH.confirm));
-		char extrabuff[10000];
 		int ret;
 		//先接收确认值
 		ret = recv(clientSok->fd,mpkgH.confirm,sizeof(mpkgH.confirm),0);
 		LogInfo(NULL);
 		//客户端已关闭连接
 		if(ret == -1) return -1;
+        cout << "confirm size = " << strlen(mpkgH.confirm) << " " << mpkgH.confirm << endl;
 		//确认值错误，则关闭连接
-		if(strcmp(mpkgH.confirm,"HYT")!= 0 && strcmp(mpkgH.confirm,"TST")!= 0)
+		if((mpkgH.confirm[0] != 'H' && mpkgH.confirm[1] != 'Y' && mpkgH.confirm[2] != 'T') && strcmp(mpkgH.confirm,"TST")!= 0)
 		{
 			LogRun("%s,data:%s","recv confirm fail return -1",mpkgH.confirm);
 			//加入黑名单，外来非法连接
@@ -166,9 +166,22 @@ again:
 		}
 
 		append((char*)&mpkgH.len,sizeof(mpkgH.len));
+		
+		{
+			//使用新接口读取数据
+			ensureWritableBytes(mpkgH.len);
+			if(clientSok->recv_data(buffer_.data()+writerIndex_,mpkgH.len) == -1) return -1; 
+			hasWritten(mpkgH.len);
+		}
+		/*
+		int extra_len = mpkgH.len >= writableBytes() ? mpkgH.len - writableBytes() : 0;
+		char extrabuff[extra_len];
+
 		//cout << "packageHead = " << mpkgH.len << endl;
 		while(mpkgH.len > hasRecv)
 		{
+			//考虑使用string，根据已知的len，去resize，读取后使用apoend
+			//对extrabuff保证足够内存，size = len - writable
 			const size_t writable = writableBytes();
 			struct iovec vec[2];
 			memset(extrabuff,0,sizeof(extrabuff));
@@ -193,11 +206,13 @@ again:
 				hasRecv += n;
 			}
 		}
+		
 		if(mpkgH.len != hasRecv)
 		{
 			LogRun("%s %s %s","recv mpkgH.len != hasRecv fail return -1",to_string(mpkgH.len).c_str(),to_string(readableBytes()).c_str());
 			*savedErrno = errno;
 		}
+		*/
 		return mpkgH.len;
 	}
 	
@@ -208,6 +223,18 @@ again:
 		struct iovec vec[1];
 		int hasWrite = 0;
 		int headLen = readPackageHead();
+        /*
+        {
+			if(readableBytes() < headLen) return 0;
+            auto data = readPackageBody(headLen);
+            cout << "send data = " << data <<endl;
+			if(clientSok->send_data(data,headLen) == -1) return 0;
+            LogInfo(NULL);
+			return headLen;
+		}
+        */
+        
+		
 		int ret;
 again:
 		if((ret = send(clientSok->fd,(char*)&headLen,sizeof(headLen),0)) == 0)
@@ -236,6 +263,7 @@ again:
 		}
 		if(headLen != hasWrite) *savedErrno = errno;
 		return hasWrite;
+	    	
 	}
 private:
 	char* begin()
