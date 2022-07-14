@@ -38,9 +38,9 @@ public:
     //interface
     int  create_udp_server();
     //int  create_udp_socket();
-    //void bind_udp(int sockfd,int port);
+    //void bind_udp(int sockfd,int port);  
     void close_udp(int sockfd);
-public:
+public:         
     int  rand_port();
     unsigned long rand_groupId();
 public:
