@@ -53,94 +53,93 @@ void LThreadPool::TerminateAll()
 //获取空闲线程
 LWorkerThread* LThreadPool::getIdleThread()
 {
+	std::unique_lock<std::mutex> gurad(m_idlequeLock);
 	while(m_idleThread.size() == 0)
 	{
-		m_idlequeCond.wait();
+		m_idlequeCond.wait(gurad);
 	}
-	m_idlequeLock.lock();
 	
 	if(m_idleThread.size() > 0)
 	{
 		LWorkerThread* idlethread = m_idleThread.front();
-		m_idlequeLock.unlock();
+		gurad.unlock();
 		return idlethread;
 	}
 	
 	//获取失败
-	m_idlequeLock.unlock();
+	gurad.unlock();
 	return nullptr;
 }
 //加入一个工作线程到空闲线程
 void LThreadPool::appendWorkThreadToIdleQueue(LWorkerThread* workthread)
 {
 	if(workthread == nullptr) return ;
-	
-	m_idlequeLock.lock();
-	m_allThread.push_back(workthread);
-	m_idleThread.push_back(workthread);
-	m_idlequeLock.unlock();
+	{
+		std::lock_guard<std::mutex> gurad(m_idlequeLock);
+		m_allThread.push_back(workthread);
+		m_idleThread.push_back(workthread);
+	}
 }
 //将空闲线程加入到忙碌线程
 void LThreadPool::moveIdleThreadToBusyQueue(LWorkerThread* idleThread)
 {
 	if(idleThread == nullptr) return ;
 	
-	m_idlequeLock.lock();
-	auto pos = std::find(m_idleThread.begin(),m_idleThread.end(),idleThread);
-	if(pos != m_idleThread.end())
-	m_idleThread.erase(pos);
-	m_idlequeLock.unlock();
-	
-	m_busyqueLock.lock();
-	m_busyThread.push_back(idleThread);
-	//m_realIdleNum--;
-	m_busyqueLock.unlock();
-
+	{
+		std::lock_guard<std::mutex> gurad(m_idlequeLock);
+		auto pos = std::find(m_idleThread.begin(),m_idleThread.end(),idleThread);
+		if(pos != m_idleThread.end())
+		m_idleThread.erase(pos);
+	}
+	{
+		std::lock_guard<std::mutex> gurad(m_busyqueLock);
+		m_busyThread.push_back(idleThread);
+	}
 }
 //将忙碌线程加入到空闲线程
 void LThreadPool::moveBusyThreadToIdleQueue(LWorkerThread* busyThread)
 {
 	if(busyThread == nullptr) return ;
 	
-	m_busyqueLock.lock();
-	auto pos = std::find(m_busyThread.begin(),m_busyThread.end(),busyThread);
-	if(pos != m_busyThread.end())
-	m_busyThread.erase(pos);
-	m_busyqueLock.unlock();
+	{
+		std::lock_guard<std::mutex> gurad(m_busyqueLock);
+		auto pos = std::find(m_busyThread.begin(),m_busyThread.end(),busyThread);
+		if(pos != m_busyThread.end())
+		m_busyThread.erase(pos);
+	}
 	
-	m_idlequeLock.lock();
-	m_idleThread.push_back(busyThread);
-	//m_realIdleNum++;
-	m_idlequeLock.unlock();
-		
-	m_idlequeCond.signal();
-	m_maxThreadNumCond.signal();
+	{
+		std::lock_guard<std::mutex> gurad(m_idlequeLock);
+		m_idleThread.push_back(busyThread);
+	}
+	m_idlequeCond.notify_all();
+	m_maxThreadNumCond.notify_all();
 }
 //创建工作线程
 void LThreadPool::createWorkThreadToIdleQueue(int num)
 {
 	std::cout << "LThreadPool::createWorkThreadToIdleQueue num = " << num << std::endl;
-	m_idlequeLock.lock();
-	for(int i=0;i<num;i++)
 	{
-		LWorkerThread* workthread = new LWorkerThread();
-		workthread->setThreadPool(this);
-		
-		m_allThread.push_back(workthread);
-		m_idleThread.push_back(workthread);
-		
-		workthread->Start();
+		std::lock_guard<std::mutex> gurad(m_idlequeLock);
+		for(int i=0;i<num;i++)
+		{
+			LWorkerThread* workthread = new LWorkerThread();
+			workthread->setThreadPool(this);
+			
+			m_allThread.push_back(workthread);
+			m_idleThread.push_back(workthread);
+			
+			workthread->Start();
+		}
 	}
-	m_idlequeLock.unlock();
 	
-	m_idlequeCond.signal();
-	m_maxThreadNumCond.signal();
+	m_idlequeCond.notify_all();
+	m_maxThreadNumCond.notify_all();
 }
 //销毁工作线程
 void LThreadPool::deleteWorkThreadFromIdleQueue(int num)
 {
-	m_idlequeLock.lock();
-	
+	std::lock_guard<std::mutex> gurad(m_idlequeLock);
 	for(int i=0;i<num;i++)
 	{
 		LWorkerThread* deltThread;
@@ -156,17 +155,18 @@ void LThreadPool::deleteWorkThreadFromIdleQueue(int num)
 		//m_realIdleNum--;
 	}
 	
-	m_idlequeLock.unlock();
-	
 	std::cout << "LThreadPool::deleteWorkThreadFromIdleQueue num = " << num << std::endl;
 }
 //线程调度接口
 void LThreadPool::Run(LJob* job)
 {
 	if(job == nullptr) return;
-	if(m_maxThreadNum <= m_busyThread.size())
 	{
-		m_maxThreadNumCond.wait();
+		std::unique_lock<std::mutex> guard(m_maxThreadNumLock);
+		while(m_maxThreadNum <= m_busyThread.size())
+		{
+			m_maxThreadNumCond.wait(guard);
+		}		
 	}
 
 	int alluseThreadNum = m_busyThread.size() + m_idleThread.size();
