@@ -117,7 +117,7 @@ char* LoginMagHandler::handleRequest(cJSON *_dataitem){
 	querySql += username->valuestring;
 	querySql += "\' and user_password='";
 	querySql += password->valuestring;
-	querySql += "\'";//去掉;
+	querySql += "\'";//去掉; 
 	LogInfo(NULL);
 	MysqlHelper* mysqlcon = Singleton<connect_pool>::getInstance().get_connect(index);
 	if(mysqlcon == NULL)
