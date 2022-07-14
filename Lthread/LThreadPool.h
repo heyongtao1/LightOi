@@ -5,7 +5,8 @@
 #include "LWorkerThread.h"
 #include "Llock.h"
 #include "../User/blog.h"
-
+#include <mutex>
+#include <condition_variable>
 using namespace HYT;
 
 class LThreadPool{
@@ -63,17 +64,19 @@ public:
 	std::vector<LWorkerThread*> m_busyThread;
 private:
 	//保护空闲线程队列的互斥锁
-	LThreadlocker m_idlequeLock;
+	std::mutex m_idlequeLock;
 	//保护忙碌线程队列的互斥锁
-	LThreadlocker m_busyqueLock;
+	std::mutex m_busyqueLock;
 	//保护实际空闲线程的互斥锁
-	LThreadlocker m_realIdleNumLock;
+	std::mutex m_realIdleNumLock;//已经废弃
+	//保护最大线程数的互斥锁
+	std::mutex m_maxThreadNumLock;
 	
 	//条件变量
-	LThreadCond m_busyqueCond;
-	LThreadCond m_idlequeCond;
+	std::condition_variable m_busyqueCond;
+	std::condition_variable m_idlequeCond;
 	//设置最大线程数的条件变量
-	LThreadCond m_maxThreadNumCond;
+	std::condition_variable m_maxThreadNumCond;
 	
 	//任务编号
 	unsigned int m_workId;

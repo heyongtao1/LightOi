@@ -3,7 +3,8 @@
 #include "LThread.h"
 #include "../User/blog.h"
 #include "Llock.h"
-
+#include <mutex>
+#include <condition_variable>
 using namespace HYT;
 
 //线程状态
@@ -36,9 +37,11 @@ private:
 	unsigned int m_workId;
 private:
 	//任务的条件变量，等待执行任务和唤醒执行任务
-	LThreadCond m_isJobCond;
+	std::condition_variable m_isJobCond;
+	//唤醒任务的锁
+	std::mutex m_isnotify;
 	//对于设置任务、设置线程池对象的锁
-	LThreadlocker m_varLocker;
+	std::mutex m_varLocker;
 public:
 	//任务执行的锁，防止多个线程执行任务
 	LThreadlocker m_workLocker;

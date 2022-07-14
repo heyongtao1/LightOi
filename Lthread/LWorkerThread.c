@@ -21,10 +21,10 @@ void LWorkerThread::Terminate()
 	
 	this->setTerminate(true);
 	this->m_Job = nullptr;
-	this->m_isJobCond.signal();
+	this->m_isJobCond.notify_all();
 	//不加延迟可能会导致出现pure virtual method called called terminate called without a active exception
 	//加延迟是为了等待线程执行完任务后，不再调用该线程对象其他成员函数，再最后销毁该线程
-	usleep(200);
+	usleep(1000);
 	
 	this->m_workLocker.unlock();
 }
@@ -40,10 +40,12 @@ void* LWorkerThread::worker(void *arg)
 	if(!lwthread->getStart());
 	while(!lwthread->getTerminate())
 	{
+		std::unique_lock<std::mutex> guard(lwthread->m_varLocker);
 		while(lwthread->m_Job == nullptr && !lwthread->getTerminate())
 		{
-			lwthread->m_isJobCond.wait();
+			lwthread->m_isJobCond.wait(guard);
 		}
+		guard.unlock();
 		if(lwthread->m_Job != nullptr)
 		lwthread->Run();
 	}
@@ -59,18 +61,25 @@ void LWorkerThread::setWorkId(unsigned int workId)
 void LWorkerThread::setLJob(LJob* job)
 {
 	if(job == nullptr) return ;
-	m_varLocker.lock();
-	this->m_Job = job;
-	m_varLocker.unlock();
-	
-	m_isJobCond.signal();
+	{
+		//std::cout << "setjob =======" << endl;
+		std::lock_guard<std::mutex> guard(m_varLocker);
+		//std::cout << "require lock" << endl;
+		this->m_Job = job;
+	}
+	m_isJobCond.notify_all();
+	//std::cout << "unlock" << endl;
 }
 void LWorkerThread::setThreadPool(LThreadPool* threadpool)
 {
 	if(threadpool == nullptr) return ;
-	m_varLocker.lock();
-	this->m_threadPool = threadpool;
-	m_varLocker.unlock();
+	{
+		//std::cout << "setThreadPool =======" << endl;
+		std::lock_guard<std::mutex> guard(m_varLocker);
+		//std::cout << "require lock" << endl;
+		this->m_threadPool = threadpool;
+	}
+	std::cout << "unlock" << endl;
 }
 
 //执行任务
