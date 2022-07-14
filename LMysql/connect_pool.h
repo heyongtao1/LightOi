@@ -140,12 +140,15 @@ class connect_pool
 		}
   		~connect_pool()
 		{
+			cout << "connect pool release" << endl;
 			if(NULL != m_mutex)
 			{
 				int size = m_connect_vect.size();
 				for(int i=0;i<size;i++)
 				{
 					MysqlHelper* demysql = m_connect_vect[i];
+					//关闭数据库连接
+					demysql->disconnect();
 					delete demysql;
 					demysql = NULL;
 				}
@@ -154,6 +157,7 @@ class connect_pool
 				vector<MysqlHelper*>(m_connect_vect).swap(m_connect_vect);
 				delete m_mutex;
 				m_mutex = NULL;
+				cout << "mysql close" << endl;
 			}
 		}
 

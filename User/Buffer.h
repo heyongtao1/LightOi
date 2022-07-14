@@ -117,7 +117,7 @@ public:
 	
 	size_t internalCapacity() const
 	{
-	  buffer_.capacity();
+	  	return buffer_.capacity();
 	}
 	// Read data directly into buffer.
 	ssize_t readFd(SocketImpl*& clientSok, int* savedErrno)
@@ -136,7 +136,7 @@ public:
 		//确认值错误，则关闭连接
 		if((mpkgH.confirm[0] != 'H' && mpkgH.confirm[1] != 'Y' && mpkgH.confirm[2] != 'T') && strcmp(mpkgH.confirm,"TST")!= 0)
 		{
-			LogRun("%s,data:%s","recv confirm fail return -1",mpkgH.confirm);
+			LogRun("recv confirm fail return -1,data:%s",mpkgH.confirm);
 			//加入黑名单，外来非法连接
 			char* clientIp = epoll_util::IP_tostring(clientSok->address);
 			Singleton<Protect>::getInstance().insertBlacklistSet(string(clientIp));
@@ -166,53 +166,57 @@ again:
 		}
 
 		append((char*)&mpkgH.len,sizeof(mpkgH.len));
-		
+		if(true)
 		{
 			//使用新接口读取数据
 			ensureWritableBytes(mpkgH.len);
 			if(clientSok->recv_data(buffer_.data()+writerIndex_,mpkgH.len) == -1) return -1; 
 			hasWritten(mpkgH.len);
 		}
+		else
+		{
 		/*
-		int extra_len = mpkgH.len >= writableBytes() ? mpkgH.len - writableBytes() : 0;
-		char extrabuff[extra_len];
+			int extra_len = mpkgH.len >= writableBytes() ? mpkgH.len - writableBytes() : 0;
+			char extrabuff[extra_len];
 
-		//cout << "packageHead = " << mpkgH.len << endl;
-		while(mpkgH.len > hasRecv)
-		{
-			//考虑使用string，根据已知的len，去resize，读取后使用apoend
-			//对extrabuff保证足够内存，size = len - writable
-			const size_t writable = writableBytes();
-			struct iovec vec[2];
-			memset(extrabuff,0,sizeof(extrabuff));
-			vec[0].iov_base = begin() + writerIndex_;
-			vec[0].iov_len = writable;
-			vec[1].iov_base = extrabuff;
-			vec[1].iov_len = sizeof extrabuff;
-			const ssize_t n = readv(clientSok->fd,vec,2);
-			if(n < 0)
+			//cout << "packageHead = " << mpkgH.len << endl;
+			while(mpkgH.len > hasRecv)
 			{
-				usleep(200);
+				//考虑使用string，根据已知的len，去resize，读取后使用apoend
+				//对extrabuff保证足够内存，size = len - writable
+				const size_t writable = writableBytes();
+				struct iovec vec[2];
+				memset(extrabuff,0,sizeof(extrabuff));
+				vec[0].iov_base = begin() + writerIndex_;
+				vec[0].iov_len = writable;
+				vec[1].iov_base = extrabuff;
+				vec[1].iov_len = sizeof extrabuff;
+				const ssize_t n = readv(clientSok->fd,vec,2);
+				if(n < 0)
+				{
+					usleep(200);
+				}
+				else if(n <= writable)
+				{
+					writerIndex_ += n;
+					hasRecv += n;
+				}
+				else
+				{
+					writerIndex_ = buffer_.size();
+					append(extrabuff, n - writable);
+					hasRecv += n;
+				}
 			}
-			else if(n <= writable)
+			
+			if(mpkgH.len != hasRecv)
 			{
-				writerIndex_ += n;
-				hasRecv += n;
+				LogRun("%s %s %s","recv mpkgH.len != hasRecv fail return -1",to_string(mpkgH.len).c_str(),to_string(readableBytes()).c_str());
+				*savedErrno = errno;
 			}
-			else
-			{
-				writerIndex_ = buffer_.size();
-				append(extrabuff, n - writable);
-				hasRecv += n;
-			}
+			*/
 		}
-		
-		if(mpkgH.len != hasRecv)
-		{
-			LogRun("%s %s %s","recv mpkgH.len != hasRecv fail return -1",to_string(mpkgH.len).c_str(),to_string(readableBytes()).c_str());
-			*savedErrno = errno;
-		}
-		*/
+
 		return mpkgH.len;
 	}
 	
@@ -223,46 +227,53 @@ again:
 		struct iovec vec[1];
 		int hasWrite = 0;
 		int headLen = readPackageHead();
-        /*
+        if(true)
         {
 			if(readableBytes() < headLen) return 0;
             auto data = readPackageBody(headLen);
+			cout << "send size = " << headLen <<endl;
             cout << "send data = " << data <<endl;
-			if(clientSok->send_data(data,headLen) == -1) return 0;
+			if(clientSok->send_data((void *)&headLen,sizeof(headLen)) == -1) return -1;
+			if(clientSok->send_data(data,headLen) == -1) return -1;
             LogInfo(NULL);
 			return headLen;
 		}
-        */
-        
-		
-		int ret;
-again:
-		if((ret = send(clientSok->fd,(char*)&headLen,sizeof(headLen),0)) == 0)
+        else
 		{
-			return 0;
-		}
-		else if(ret < 0)
-		{
-			if(errno == EINTR ||errno == EAGAIN ||errno == EWOULDBLOCK)
-			goto again;
-		}
-		while(headLen > hasWrite)
-		{
-			const size_t readable = readableBytes();
-			vec[0].iov_base = begin() + readerIndex_;
-			vec[0].iov_len = readable;
-			const ssize_t n = writev(clientSok->fd,vec,1);
-			if(n < 0)
+			
+		/*	
+			int ret;
+	again:
+			if((ret = send(clientSok->fd,(char*)&headLen,sizeof(headLen),0)) == 0)
 			{
-				usleep(200);
-			}else if(n <= readable)
-			{
-				readerIndex_ += n;
-				hasWrite += n;
+				return -1;
 			}
+			else if(ret < 0)
+			{
+				if(errno == EINTR ||errno == EAGAIN ||errno == EWOULDBLOCK)
+					goto again;
+				else return -1;
+			}
+			while(headLen > hasWrite)
+			{
+				const size_t readable = readableBytes();
+				vec[0].iov_base = begin() + readerIndex_;
+				vec[0].iov_len = readable;
+				const ssize_t n = writev(clientSok->fd,vec,1);
+				if(n < 0)
+				{
+					usleep(200);
+				}else if(n <= readable)
+				{
+					readerIndex_ += n;
+					hasWrite += n;
+				}
+			}
+			if(headLen != hasWrite) *savedErrno = errno;
+			return hasWrite;	
+			*/		
 		}
-		if(headLen != hasWrite) *savedErrno = errno;
-		return hasWrite;
+
 	    	
 	}
 private:

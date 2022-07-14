@@ -281,6 +281,7 @@ char *RecommendBlogMagHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;*/
+	return NULL;
 }
 
 char *KeyWorkFindBlogMagHandler::handleRequest(cJSON *_dataitem){
@@ -327,6 +328,7 @@ char *KeyWorkFindBlogMagHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;*/
+	return NULL;
 }
 char *RequestAllBlogMagHandler::handleRequest(cJSON *_dataitem){
 
@@ -389,6 +391,7 @@ bool writePicFile(char *filename,int filesize,unsigned char *filetext)
 	//关闭文件指针，释放buffer内存
 	fclose(fp);
 	return true;*/
+	return NULL;
 }
 
 unsigned char * readPicFile(char *filename,int &filesize){
@@ -415,6 +418,7 @@ unsigned char * readPicFile(char *filename,int &filesize){
 	fread(ImgBuffer, filesize, 1, fp);
 	fclose(fp);
 	return ImgBuffer;*/
+	return NULL;
 }
 char *ResourceDownloadHandler::handleRequest(cJSON *_dataitem){
 	/*
@@ -448,6 +452,7 @@ char *ResourceDownloadHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;*/
+	return NULL;
 }
 char *FileMsgHandler::handleRequest(cJSON *_dataitem){
 	/*
@@ -499,4 +504,5 @@ char *FileMsgHandler::handleRequest(cJSON *_dataitem){
 	//解码 
 	//CBase64::Decode(fromstring,pOut,&filesize);
 	//int typeflag = writePicFile(filename,filesize,pOut);
+	return NULL;
 }

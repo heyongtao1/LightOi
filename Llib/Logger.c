@@ -10,6 +10,7 @@
 #include <memory>
 #include <stdarg.h>
 #include <string.h>
+#include <sstream>
 Logger& Logger::GetInstance()
 {
     static Logger logger;
@@ -50,7 +51,7 @@ void Logger::Stop()
     spthread_->join();
 }
  
-void Logger::AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, const char* pszFuncSig, char* pszFmt, ...)
+void Logger::AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, const char* pszFuncSig,const char* pszFmt, ...)
 {
     char msg[256] = { 0 };
  
@@ -62,7 +63,15 @@ void Logger::AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, c
     time_t now = time(NULL);
     struct tm* tmstr = localtime(&now);
     char content[512] = { 0 };
-    sprintf(content, "[%04d-%02d-%02d %02d:%02d:%02d][%s][0x%04x][%s:%d %s] [%s]\n",
+
+    unsigned long long tid;
+    {
+        std::ostringstream oss;
+        oss << std::this_thread::get_id();
+        std::string stid = oss.str();
+        tid = std::stoull(stid);
+    }
+    sprintf(content, "[%04d-%02d-%02d %02d:%02d:%02d][%s][0x%lld][%s:%d %s] [%s]\n",
                 tmstr->tm_year + 1900,
                 tmstr->tm_mon + 1,
                 tmstr->tm_mday,
@@ -70,7 +79,7 @@ void Logger::AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, c
                 tmstr->tm_min,
                 tmstr->tm_sec,
                 pszLevel,
-                std::this_thread::get_id(),
+                tid,
                 pszFile,
                 lineNo,
                 pszFuncSig,

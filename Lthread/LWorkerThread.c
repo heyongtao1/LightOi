@@ -48,6 +48,7 @@ void* LWorkerThread::worker(void *arg)
 		lwthread->Run();
 	}
 	std::cout<<"WorkerThread Terminate" << std::endl;
+	return NULL;
 }
 
 void LWorkerThread::setWorkId(unsigned int workId)

@@ -32,7 +32,6 @@ namespace LightOi
 		//创建连接池中的连接个数
 		vector<MysqlHelper *> m_databases;
 		for(int i=0;i<NUMBER;i++){
-			printf("new MysqlHelper %d\n",i);
 			MysqlHelper *mysqlHelper = new MysqlHelper();
 			mysqlHelper->init("172.22.63.3","hyt","123456","Note","utf8");//uniLJob
 			mysqlHelper->connect();
