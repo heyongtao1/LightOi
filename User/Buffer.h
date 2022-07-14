@@ -134,7 +134,7 @@ public:
 		if(ret == -1) return -1;
         cout << "confirm size = " << strlen(mpkgH.confirm) << " " << mpkgH.confirm << endl;
 		//确认值错误，则关闭连接
-		if((mpkgH.confirm[0] != 'H' && mpkgH.confirm[1] != 'Y' && mpkgH.confirm[2] != 'T') && strcmp(mpkgH.confirm,"TST")!= 0)
+		if((mpkgH.confirm[0] != 'H' || mpkgH.confirm[1] != 'Y' || mpkgH.confirm[2] != 'T') && strcmp(mpkgH.confirm,"TST")!= 0)
 		{
 			LogRun("recv confirm fail return -1,data:%s",mpkgH.confirm);
 			//加入黑名单，外来非法连接
