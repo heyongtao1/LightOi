@@ -25,7 +25,6 @@ namespace LightOi
 		{
 			_mainReactor.setdisPatchCallbackFun(std::bind(&TcpServer::disPatchNewConnect,this,std::placeholders::_1));
 		}
-	
 	public:
 		/*all modular start function*/
 		void start();

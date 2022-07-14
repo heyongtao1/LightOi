@@ -54,7 +54,7 @@ int SocketImpl::send_data(const void* data, int len)
     int ret = 0;
     int offset = 0;
     while (len) { // 循环写数据，直至全部写入
-        ret = send(fd, data + offset, len, 0);
+        ret = send(fd, (const char*)data + offset, len, 0);
         if (ret == 0) {
             if (errno != EAGAIN) {
                 return -1;
@@ -80,7 +80,7 @@ int SocketImpl::recv_data(void* data, int len)
     int ret = 0;
     int offset = 0;
     while (len) { // 循环读数据，直至全部读完
-        ret = recv(fd, data + offset, len, 0);
+        ret = recv(fd, (char*)data + offset, len, 0);
         if (ret == 0) {
             if (errno != EAGAIN) {
                 return -1;

@@ -21,6 +21,7 @@
 #include "../Llib/Logger.h"
 #include "../LSocket/UDP/udp.h"
 #define MAX_CONN_EVENT_NUMBER 10240
+#define MAX_THREAD_NUMBER 10
 
 using namespace socketfactory;
 //全局任务队列
@@ -108,7 +109,7 @@ namespace LightOi
 		SubReactor()
 		{
 			activeNumber = totalActiveNumber = 0;
-			poolmanage = new LThreadPoolManage(50);
+			poolmanage = new LThreadPoolManage(MAX_THREAD_NUMBER);
 			udp_ser = new protocol::udp_server(epfd);
 		}
 	

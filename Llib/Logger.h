@@ -28,7 +28,7 @@ public:
     bool Start();
     void Stop();
  
-    void AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, const char* pszFuncSig, char* pszFmt, ...);
+    void AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, const char* pszFuncSig,const char* pszFmt, ...);
  
 private:
     Logger() = default;

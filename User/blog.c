@@ -18,7 +18,7 @@ namespace HYT{
 		LogInfo(NULL);
 		int savedErrno = 1;
 		int ret = buffer.writeFd(clientSok,&savedErrno);
-		if( savedErrno == errno || ret == 0)
+		if( savedErrno == errno || ret == -1)
 		{
 			return false;
 		}
@@ -47,12 +47,23 @@ namespace HYT{
 			readable();
 			return ;
 		}
-		//将解析后的数据写入缓冲区
 		int ret_head = strlen(ret_data);
-		buffer.append((char*)&ret_head,sizeof(ret_head));
-		buffer.append(ret_data,ret_head);
-		//通知主程序该fd可写，触发写事件
-		writable();
+		if(false)
+		{
+			//将解析后的数据写入缓冲区
+			buffer.append((char*)&ret_head,sizeof(ret_head));
+			buffer.append(ret_data,ret_head);
+			//通知主程序该fd可写，触发写事件
+			writable();
+			return ;
+		}
+		else
+		{
+			//直接发送返回
+			if(clientSok->send_data((void*)&ret_head,sizeof(ret_head)) == -1) LogError(NULL);
+			if(clientSok->send_data(ret_data,strlen(ret_data)) == -1) LogError(NULL);
+			readable();
+		}
 	}
 
 }

@@ -10,7 +10,7 @@
 #include "SubReactorThread.h"
 #include "../Llib/Logger.h"
 #include "../LSocket/socketimpl.h"
-#define THREAD_MAX_NUM 8
+#define THREAD_MAX_NUM 1
 using namespace socketfactory;
 namespace LightOi
 {
