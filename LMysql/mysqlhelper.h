@@ -63,7 +63,7 @@ struct DBConf
  _charset = mpTmp["charset"];
  _port = atoi(mpTmp["dbport"].c_str());
  _flag = 0;
-
+ 
  if(mpTmp["dbport"] == "")
  {
  _port = 3306;
