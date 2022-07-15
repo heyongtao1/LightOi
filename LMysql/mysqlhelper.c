@@ -247,7 +247,7 @@ string MysqlHelper::getVariables(const string &sName)
 
  return "";
 }
-
+ 
 void MysqlHelper::execute(const string& sSql)
 {
  /**
