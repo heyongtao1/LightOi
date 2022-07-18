@@ -22,7 +22,7 @@ using namespace std;
 namespace net{
 
 typedef struct packageHead{
-	char confirm[3] = {0};
+	char confirm[4] = {0};
 	int  len = 0;
 }pkgH;
 
@@ -125,16 +125,13 @@ public:
 		LogInfo(NULL);
 		int hasRecv = 0;
 		pkgH mpkgH;
-		memset(mpkgH.confirm,0,sizeof(mpkgH.confirm));
+		memset(mpkgH.confirm,'\0',sizeof(mpkgH.confirm));
 		int ret;
 		//先接收确认值
-		ret = recv(clientSok->fd,mpkgH.confirm,sizeof(mpkgH.confirm),0);
-		LogInfo(NULL);
-		//客户端已关闭连接
-		if(ret == -1) return -1;
-        cout << "confirm size = " << strlen(mpkgH.confirm) << " " << mpkgH.confirm << endl;
+		if(recv(clientSok->fd,mpkgH.confirm,3,0) == -1) return -1;
+
 		//确认值错误，则关闭连接
-		if((mpkgH.confirm[0] != 'H' || mpkgH.confirm[1] != 'Y' || mpkgH.confirm[2] != 'T') && strcmp(mpkgH.confirm,"TST")!= 0)
+		if(strcmp(mpkgH.confirm,"HYT")!= 0 && strcmp(mpkgH.confirm,"TST")!= 0)
 		{
 			LogRun("recv confirm fail return -1,data:%s",mpkgH.confirm);
 			//加入黑名单，外来非法连接
@@ -150,7 +147,7 @@ public:
 		else
 		{
 			LogInfo(NULL);
-again:
+			again:
 			if((ret = recv(clientSok->fd,(char*)&mpkgH.len,sizeof(mpkgH.len),0)) == 0)
 			{
 				LogRun("%s","recv mpkgH.len fail return -1");
@@ -166,55 +163,12 @@ again:
 		}
 
 		append((char*)&mpkgH.len,sizeof(mpkgH.len));
-		if(true)
+
 		{
 			//使用新接口读取数据
 			ensureWritableBytes(mpkgH.len);
 			if(clientSok->recv_data(buffer_.data()+writerIndex_,mpkgH.len) == -1) return -1; 
 			hasWritten(mpkgH.len);
-		}
-		else
-		{
-		/*
-			int extra_len = mpkgH.len >= writableBytes() ? mpkgH.len - writableBytes() : 0;
-			char extrabuff[extra_len];
-
-			//cout << "packageHead = " << mpkgH.len << endl;
-			while(mpkgH.len > hasRecv)
-			{
-				//考虑使用string，根据已知的len，去resize，读取后使用apoend
-				//对extrabuff保证足够内存，size = len - writable
-				const size_t writable = writableBytes();
-				struct iovec vec[2];
-				memset(extrabuff,0,sizeof(extrabuff));
-				vec[0].iov_base = begin() + writerIndex_;
-				vec[0].iov_len = writable;
-				vec[1].iov_base = extrabuff;
-				vec[1].iov_len = sizeof extrabuff;
-				const ssize_t n = readv(clientSok->fd,vec,2);
-				if(n < 0)
-				{
-					usleep(200);
-				}
-				else if(n <= writable)
-				{
-					writerIndex_ += n;
-					hasRecv += n;
-				}
-				else
-				{
-					writerIndex_ = buffer_.size();
-					append(extrabuff, n - writable);
-					hasRecv += n;
-				}
-			}
-			
-			if(mpkgH.len != hasRecv)
-			{
-				LogRun("%s %s %s","recv mpkgH.len != hasRecv fail return -1",to_string(mpkgH.len).c_str(),to_string(readableBytes()).c_str());
-				*savedErrno = errno;
-			}
-			*/
 		}
 
 		return mpkgH.len;
@@ -227,7 +181,7 @@ again:
 		struct iovec vec[1];
 		int hasWrite = 0;
 		int headLen = readPackageHead();
-        if(true)
+
         {
 			if(readableBytes() < headLen) return 0;
             auto data = readPackageBody(headLen);
@@ -238,42 +192,6 @@ again:
             LogInfo(NULL);
 			return headLen;
 		}
-        else
-		{
-			
-		/*	
-			int ret;
-	again:
-			if((ret = send(clientSok->fd,(char*)&headLen,sizeof(headLen),0)) == 0)
-			{
-				return -1;
-			}
-			else if(ret < 0)
-			{
-				if(errno == EINTR ||errno == EAGAIN ||errno == EWOULDBLOCK)
-					goto again;
-				else return -1;
-			}
-			while(headLen > hasWrite)
-			{
-				const size_t readable = readableBytes();
-				vec[0].iov_base = begin() + readerIndex_;
-				vec[0].iov_len = readable;
-				const ssize_t n = writev(clientSok->fd,vec,1);
-				if(n < 0)
-				{
-					usleep(200);
-				}else if(n <= readable)
-				{
-					readerIndex_ += n;
-					hasWrite += n;
-				}
-			}
-			if(headLen != hasWrite) *savedErrno = errno;
-			return hasWrite;	
-			*/		
-		}
-
 	    	
 	}
 private:

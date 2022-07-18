@@ -61,7 +61,7 @@ namespace LightOi
 	private:
 		pthread_t _thread;
 		
-		SubReactor<T> _subReactor;
+		T _subReactor;
 	};
 
 }

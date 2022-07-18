@@ -62,10 +62,6 @@ namespace LightOi
 			*/
 			for(int i=0;i<number;i++)
 			{
-				if(events[i].data.fd == udp_fd)
-				{
-					//create session udp
-				}
 				_acceptor.handleAccept(serverSocket);
 			}
 			

@@ -1,18 +1,26 @@
 #include "udp.h"
-
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <sys/epoll.h>
+#include <strings.h>
+#include <fcntl.h>
+#include <arpa/inet.h>
 namespace protocol
 {
-    int udp_server::create_udp_server()
+    int udp_server::create_udp_server(int port = -1)
     {
-        int sockfd = create_udp_socket();
         
-        epoll_util::addfd(epfd,sockfd,true);
-        int port = rand_port();
+        int sockfd = create_udp_socket();
+        port = port == -1 ? rand_port() : port;
         fd_port[sockfd] = port;
         int groupId = rand_groupId();
         fd_groupId[sockfd] = groupId;
         groupId_fd[groupId] = sockfd;
         bind_udp(sockfd,port);
+        epoll_util::addfd(epfd,sockfd,false);
+        
         return sockfd;
     }
 
@@ -32,11 +40,6 @@ namespace protocol
  
          bind(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
     }
-
-    udp_socket::~udp_socket()
-    {
-        close(fd);
-    } 
     
     void udp_server::close_udp(int sockfd)
     {

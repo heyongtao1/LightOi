@@ -11,6 +11,7 @@
 #include "SubReactorThreadPoll.h"
 //#include "http_conn.h"
 #include "../User/blog.h"
+#include "../User/UDP_user.h"
 #include "../LMysql/connect_pool.h"
 #include "../Llib/Logger.h"
 #include "../LSocket/socketimpl.h"
@@ -52,7 +53,8 @@ namespace LightOi
 		MainReactor _mainReactor;
 		/*In addition to connection events, it is only responsible for readable, 
 		writable and exception events */
-		SubReactorThreadPool<HYT::LJob> _pool;
+		SubReactorThreadPool<HYT::LJob,UDP_user> _pool;
+		
 	};
 }
 #endif

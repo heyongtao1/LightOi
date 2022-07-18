@@ -43,5 +43,4 @@ public:
 	int epollfd;
 	SocketImpl* clientSok;
 };
-
 #endif

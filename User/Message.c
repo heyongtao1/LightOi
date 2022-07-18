@@ -38,6 +38,8 @@ char* Message::messageAnalysis(const char* message){
 								  executor->setHandler(new ResourceDownloadHandler());break;						  
 		case Message::UPDATE_NOTE_MAG:
 								  executor->setHandler(new UpdateNoteHandler());break;
+		case Message::CREATE_SESSION_MAG:
+								  executor->setHandler(new CreateSessionHandler());break;
 	}
 	retMag = executor->execWork(dataitem);
 	delete(executor);
@@ -235,6 +237,11 @@ char *UpdateNoteHandler::handleRequest(cJSON *_dataitem){
 	
 	pthread_rwlock_unlock(&rwlock);//解锁
 	Singleton<connect_pool>::getInstance().remove_connect_from_pool(index);
+	return NULL;
+}
+
+char *CreateSessionHandler::handleRequest(cJSON *_dataitem){
+	
 	return NULL;
 }
 

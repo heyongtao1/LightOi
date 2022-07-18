@@ -1,5 +1,5 @@
 #ifndef _UDP_H
-
+#define _UDP_H
 #include <stdio.h>                                                                                                                                                                                             
 #include <stdlib.h>
 #include <time.h>
@@ -22,7 +22,7 @@ namespace protocol{
 class udp_socket{
 public:
     udp_socket(){}
-    ~udp_socket();
+    ~udp_socket(){};
 public:
     int  create_udp_socket();
     void bind_udp(int sockfd,int port);
@@ -36,9 +36,7 @@ public:
     ~udp_server();
 public:
     //interface
-    int  create_udp_server();
-    //int  create_udp_socket();
-    //void bind_udp(int sockfd,int port);  
+    int  create_udp_server(int port);
     void close_udp(int sockfd);
 public:         
     int  rand_port();
