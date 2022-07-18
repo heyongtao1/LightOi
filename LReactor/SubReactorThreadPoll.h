@@ -7,14 +7,16 @@
 #ifndef _SUBREACTORTHREADPOLL_H
 #define _SUBREACTORTHREADPOLL_H
 #include <iostream>
+#include "Reactor.h"
 #include "SubReactorThread.h"
+#include "UdpReactor.h"
 #include "../Llib/Logger.h"
 #include "../LSocket/socketimpl.h"
 #define THREAD_MAX_NUM 1
 using namespace socketfactory;
 namespace LightOi
 {
-	template <typename T>
+	template <typename T,typename U>
 	class SubReactorThreadPool{
 	public:
 		SubReactorThreadPool()
@@ -59,6 +61,7 @@ namespace LightOi
 		{
 			for(int i=0;i<THREAD_MAX_NUM;i++)
 				_subReactorThread[i].stopWork();
+			_udpReactorThread.stopWork();
 		}
 		
 		void printTotalActiveNumber()
@@ -67,8 +70,8 @@ namespace LightOi
 				std::cout << " i activeNumber = "  << std::endl;//<< _subReactorThread[i].getTotalActiveNumber()
 		}
 	private:
-		SubReactorThread<T> _subReactorThread[THREAD_MAX_NUM];
-		
+		SubReactorThread<SubReactor<T>> _subReactorThread[THREAD_MAX_NUM];
+		SubReactorThread<UdpReactor<U>> _udpReactorThread;
 		int last;
 	};
 }

@@ -3,17 +3,30 @@
 #include "../User/blog.h"
 #include "LThreadPool.h"
 
+template <typename T>
 class LThreadPoolManage{
 public:
-	LThreadPoolManage();
-	LThreadPoolManage(int initThreadNum);
-	~LThreadPoolManage();
+	LThreadPoolManage(int initThreadNum = 50)
+	{
+		m_threadpool = new LThreadPool<T>(initThreadNum);
+	}
+	~LThreadPoolManage()
+	{
+		if(m_threadpool != nullptr)
+		{
+			delete m_threadpool;
+			m_threadpool = nullptr;
+		}
+	}
 
 public:
-	void addTask(LJob* job);
+	void addTask(T* job)
+	{
+		m_threadpool->Run(job);
+	}
 	
 private:
-	LThreadPool* m_threadpool;
+	LThreadPool<T>* m_threadpool;
 };
 
 #endif

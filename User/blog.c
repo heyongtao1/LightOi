@@ -37,7 +37,7 @@ namespace HYT{
 		//获取包体
 		const char* data = buffer.readPackageBody(head);
         LogInfo(NULL);
-        cout << "data = " << data << endl;
+        //cout << "data = " << data << endl;
 		char* ret_data = Singleton<Message>::getInstance().messageAnalysis(data);
         LogInfo(NULL);
 		if(ret_data == NULL)

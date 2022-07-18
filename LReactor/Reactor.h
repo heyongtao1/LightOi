@@ -21,7 +21,7 @@
 #include "../Llib/Logger.h"
 #include "../LSocket/UDP/udp.h"
 #define MAX_CONN_EVENT_NUMBER 10240
-#define MAX_THREAD_NUMBER 10
+#define MAX_THREAD_NUMBER 5
 
 using namespace socketfactory;
 //全局任务队列
@@ -59,8 +59,6 @@ namespace LightOi
 	public:
 		MainReactor(const char *address, uint16_t port) : _address(address), _port(port)
 		{
-			udp_main = new protocol::udp_server(epfd);
-			udp_fd = udp_main->create_udp_server();
 			// 设置已接收新连接的回调函数
 			_acceptor.setNewConnectCallbackFun(std::bind(&MainReactor::NewConnectCallback,this,std::placeholders::_1));
 		}
@@ -70,11 +68,6 @@ namespace LightOi
 			{
 				delete serverSocket;
 				serverSocket = nullptr;
-			}
-			if(udp_main != nullptr)
-			{
-				delete udp_main;
-				udp_main = nullptr;
 			}
 		}
 	public:
@@ -98,10 +91,6 @@ namespace LightOi
 		disPatchCallback _disPatchcb;
 		
 		ServerSocketImpl* serverSocket;
-
-		protocol::udp_server* udp_main;
-
-		int udp_fd;
 	};
 	template<typename T>
 	class SubReactor : public Reactor{
@@ -109,16 +98,16 @@ namespace LightOi
 		SubReactor()
 		{
 			activeNumber = totalActiveNumber = 0;
-			poolmanage = new LThreadPoolManage(MAX_THREAD_NUMBER);
-			udp_ser = new protocol::udp_server(epfd);
+			poolmanage = new LThreadPoolManage<HYT::LJob>(MAX_THREAD_NUMBER);
 		}
 	
 		~SubReactor()
 		{
-			delete poolmanage;
-			poolmanage = nullptr;
-			delete udp_ser;
-			udp_ser = nullptr;
+			if(poolmanage != nullptr)
+			{
+				delete poolmanage;
+				poolmanage = nullptr;
+			}
 		}
 
 		// loop epoll_wait
@@ -196,8 +185,7 @@ namespace LightOi
 		int totalActiveNumber;
 		// 计算线程池
 		//threadpool<HYT::LJob> workthreadPoll;
-		LThreadPoolManage* poolmanage;
-		protocol::udp_server* udp_ser;
+		LThreadPoolManage<HYT::LJob>* poolmanage;
 	};
 }
 #endif
