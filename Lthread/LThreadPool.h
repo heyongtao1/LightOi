@@ -4,7 +4,7 @@
 #include <vector>
 #include "LWorkerThread.h"
 #include "Llock.h"
-#include "../User/blog.h"
+#include "../User/LJob.h"
 #include <mutex>
 #include <condition_variable>
 using namespace HYT;
@@ -105,7 +105,6 @@ public:
 	//增加多个工作线程到空闲队列
 	void createWorkThreadToIdleQueue(int num)
 	{
-		std::cout << "LThreadPool::createWorkThreadToIdleQueue num = " << num << std::endl;
 		{
 			std::lock_guard<std::mutex> gurad(m_idlequeLock);
 			for(int i=0;i<num;i++)
@@ -141,8 +140,6 @@ public:
 				m_idleThread.erase(pos);
 			//m_realIdleNum--;
 		}
-
-		std::cout << "LThreadPool::deleteWorkThreadFromIdleQueue num = " << num << std::endl;
 	}
 
 public:
@@ -153,8 +150,10 @@ public:
 			delete m_allThread[i];
 			m_allThread[i] = nullptr;
 		}
+#ifdef  DEBUG_COUT
 		std::cout << "m_allThread.size() = " << m_allThread.size()<< std::endl;
 		std::cout << "realuseThread = " << m_idleThread.size() + m_busyThread.size()<< std::endl;
+#endif
 	}
     void Run(T* job)
 	{

@@ -14,14 +14,14 @@
 #include <sys/epoll.h>
 #include <list>
 #include <unordered_map>
+#include <memory>
 #include "Acceptor.h"
 #include "../LSocket/socketfactory.h"
 #include "../Lthread/LThreadPoolManage.h"
-#include "../User/blog.h"
+#include "../User/LJob.h"
 #include "../Llib/Logger.h"
 #include "../LSocket/UDP/udp.h"
-#define MAX_CONN_EVENT_NUMBER 10240
-#define MAX_THREAD_NUMBER 5
+#include "../config.hpp"
 
 using namespace socketfactory;
 //全局任务队列
@@ -64,11 +64,6 @@ namespace LightOi
 		}
 		~MainReactor()
 		{
-			if(serverSocket != nullptr)
-			{
-				delete serverSocket;
-				serverSocket = nullptr;
-			}
 		}
 	public:
 		void NewConnectCallback(SocketImpl*& clientSok);
@@ -98,16 +93,19 @@ namespace LightOi
 		SubReactor()
 		{
 			activeNumber = totalActiveNumber = 0;
-			poolmanage = new LThreadPoolManage<HYT::LJob>(MAX_THREAD_NUMBER);
+			poolmanage = std::make_shared<LThreadPoolManage<HYT::LJob>>(MAX_THREAD_NUMBER);
+			//poolmanage = new LThreadPoolManage<HYT::LJob>(MAX_THREAD_NUMBER);
 		}
 	
 		~SubReactor()
 		{
-			if(poolmanage != nullptr)
+			for(auto it=users.begin();it != users.end();it++)
 			{
-				delete poolmanage;
-				poolmanage = nullptr;
+				delete it->second;
+				it->second = nullptr;
+				users.erase(it++);
 			}
+			users.clear();
 		}
 
 		// loop epoll_wait
@@ -130,11 +128,9 @@ namespace LightOi
 					//onReadable
 					if(events[i].events & EPOLLIN)
 					{
-						if(users[sockfd].read())
+						if(users[sockfd]->read())
 						{
-							// join workthreadPoll 
-							//workthreadPoll.addjob(&users[sockfd]);
-							poolmanage->addTask(&users[sockfd]);
+							poolmanage->addTask(users[sockfd]);
 							activeNumber++;
 							totalActiveNumber++;
 						}
@@ -142,7 +138,12 @@ namespace LightOi
 						{
 							// close client fd
 							LogInfo(NULL);
-							users[sockfd].close_conn();
+							users[sockfd]->close_conn();
+							{
+								T* t = users[sockfd];
+								delete t;
+								t = nullptr;
+							}
 							users.erase(sockfd);
 							activeNumber--;
 						}
@@ -150,10 +151,15 @@ namespace LightOi
 					//onWriteable
 					else if(events[i].events & EPOLLOUT)
 					{
-						if(!users[sockfd].write())
+						if(!users[sockfd]->write())
 						{
 							LogInfo(NULL);
-							users[sockfd].close_conn();
+							users[sockfd]->close_conn();
+							{
+								T* t = users[sockfd];
+								delete t;
+								t = nullptr;
+							}
 							users.erase(sockfd);
 						}
 						activeNumber--;
@@ -169,23 +175,23 @@ namespace LightOi
 			LogInfo(NULL);
 			activeNumber++;
 			
-			//考虑是否需要动态分配内存，是否析构
-			T t;
-			users.emplace(clientSok->fd,std::move(t));
-			users[clientSok->fd].init(epfd,clientSok);	
+			T* t = new T();
+			users.emplace(clientSok->fd,t);
+			users[clientSok->fd]->init(epfd,clientSok);	
 		}
 		
 		int getActiveNumber() { return activeNumber; }
 		
 		int getTotalActiveNumber() { return totalActiveNumber; }
 	private:
-		std::unordered_map<int,T> users;
+		std::unordered_map<int,T*> users;
 		// 活动请求数目
 		int activeNumber;
 		int totalActiveNumber;
 		// 计算线程池
 		//threadpool<HYT::LJob> workthreadPoll;
-		LThreadPoolManage<HYT::LJob>* poolmanage;
+		std::shared_ptr<LThreadPoolManage<HYT::LJob>> poolmanage;
+		//LThreadPoolManage<HYT::LJob>* poolmanage;
 	};
 }
 #endif

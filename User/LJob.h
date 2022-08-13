@@ -4,23 +4,23 @@
 #include "Buffer.h"
 #include "../util/util.h"
 #include "../util/Singleton.h"
+#include <memory>
 #include "user.h"
 namespace HYT{
 	class LJob : public User{
 		friend class Singleton<Message>;
 	public:
-		LJob() : buffer{10240}{}
+		LJob()
+		{ 
+			buffer = std::make_shared<net::Buffer>(10240);
+		}
 		~LJob(){}
-		
 	public: // 接口
 		bool read();
-		
 		bool write();
-	
 		void task();
-	
 	private:
-		net::Buffer buffer;
+		std::shared_ptr<net::Buffer> buffer;
 	};
 }
 #endif

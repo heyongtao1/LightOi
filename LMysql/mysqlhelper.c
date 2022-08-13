@@ -12,105 +12,99 @@ namespace mysqlhelper{
 MysqlHelper::MysqlHelper():_bConnected(false)
 {
 
- _pstMql = mysql_init(NULL);
-
+	_pstMql = mysql_init(NULL);
 }
 
 MysqlHelper::MysqlHelper(const string& sHost, const string& sUser, const string& sPasswd, const string& sDatabase, const string &sCharSet, int port, int iFlag)
 :_bConnected(false)
 {
- init(sHost, sUser, sPasswd, sDatabase, sCharSet, port, iFlag);
+	init(sHost, sUser, sPasswd, sDatabase, sCharSet, port, iFlag);
 
- _pstMql = mysql_init(NULL);
+	_pstMql = mysql_init(NULL);
 }
 
 MysqlHelper::MysqlHelper(const DBConf& tcDBConf)
 :_bConnected(false)
 {
- _dbConf = tcDBConf;
+	_dbConf = tcDBConf;
 
- _pstMql = mysql_init(NULL); 
+	_pstMql = mysql_init(NULL); 
 }
 
 MysqlHelper::~MysqlHelper()
 {
- if (_pstMql != NULL)
- {
- mysql_close(_pstMql);
- _pstMql = NULL;
- }
+	if (_pstMql != NULL)
+	{
+		mysql_close(_pstMql);
+		_pstMql = NULL;
+	}
 }
 
 void MysqlHelper::init(const string& sHost, const string& sUser, const string& sPasswd, const string& sDatabase, const string &sCharSet, int port, int iFlag)
 {
- _dbConf._host = sHost;
- _dbConf._user = sUser;
- _dbConf._password = sPasswd;
- _dbConf._database = sDatabase;
- _dbConf._charset = sCharSet;
- _dbConf._port = port;
- _dbConf._flag = iFlag;
+	_dbConf._host = sHost;
+	_dbConf._user = sUser;
+	_dbConf._password = sPasswd;
+	_dbConf._database = sDatabase;
+	_dbConf._charset = sCharSet;
+	_dbConf._port = port;
+	_dbConf._flag = iFlag;
 }
 
 void MysqlHelper::init(const DBConf& tcDBConf)
 {
- _dbConf = tcDBConf;
+	_dbConf = tcDBConf;
 }
 
 void MysqlHelper::connect()
 {
- disconnect();
+	disconnect();
 
- if( _pstMql == NULL)
- {
- _pstMql = mysql_init(NULL);
- }
- //建立连接后, 自动调用设置字符集语句
- if(!_dbConf._charset.empty()) {	
- if (mysql_options(_pstMql, MYSQL_SET_CHARSET_NAME, _dbConf._charset.c_str())) {
-		throw MysqlHelper_Exception(string("MysqlHelper::connect: mysql_options MYSQL_SET_CHARSET_NAME ") + _dbConf._charset + ":" + string(mysql_error(_pstMql)));
-	 }
- }
+	if( _pstMql == NULL)
+	{
+		_pstMql = mysql_init(NULL);
+	}
+	//建立连接后, 自动调用设置字符集语句
+	if(!_dbConf._charset.empty()) {	
+	if (mysql_options(_pstMql, MYSQL_SET_CHARSET_NAME, _dbConf._charset.c_str())) {
+			throw MysqlHelper_Exception(string("MysqlHelper::connect: mysql_options MYSQL_SET_CHARSET_NAME ") + _dbConf._charset + ":" + string(mysql_error(_pstMql)));
+		}
+	}
 
- if (mysql_real_connect(_pstMql, _dbConf._host.c_str(), _dbConf._user.c_str(), _dbConf._password.c_str(), _dbConf._database.c_str(), _dbConf._port, NULL, _dbConf._flag) == NULL) 
- {
-	throw MysqlHelper_Exception("[MysqlHelper::connect]: mysql_real_connect: " + string(mysql_error(_pstMql)));
- }
+	if (mysql_real_connect(_pstMql, _dbConf._host.c_str(), _dbConf._user.c_str(), _dbConf._password.c_str(), _dbConf._database.c_str(), _dbConf._port, NULL, _dbConf._flag) == NULL) 
+	{
+		throw MysqlHelper_Exception("[MysqlHelper::connect]: mysql_real_connect: " + string(mysql_error(_pstMql)));
+	}
 
- _bConnected = true;
+	_bConnected = true;
 }
 
 void MysqlHelper::disconnect()
 {
- if (_pstMql != NULL)
- {
- mysql_close(_pstMql);
- _pstMql = mysql_init(NULL);
- }
+	if (_pstMql != NULL)
+	{
+		mysql_close(_pstMql);
+		_pstMql = NULL;
+	}
 
- _bConnected = false; 
+	_bConnected = false; 
 }
 
 string MysqlHelper::escapeString(const string& sFrom)
 {
- if(!_bConnected)
- {
- connect();
- }
+	if(!_bConnected)
+	{
+		connect();
+	}
+	string sTo;
+	string::size_type iLen = sFrom.length() * 2 + 1;
+	char *pTo = (char *)malloc(iLen);
 
- string sTo;
- string::size_type iLen = sFrom.length() * 2 + 1;
- char *pTo = (char *)malloc(iLen);
-
- memset(pTo, 0x00, iLen);
-
- mysql_real_escape_string(_pstMql, pTo, sFrom.c_str(), sFrom.length());
-
- sTo = pTo;
-
- free(pTo);
-
- return sTo;
+	memset(pTo, 0x00, iLen);
+	mysql_real_escape_string(_pstMql, pTo, sFrom.c_str(), sFrom.length());
+	sTo = pTo;
+	free(pTo);
+	return sTo;
 }
 
 MYSQL *MysqlHelper::getMysql(void)
@@ -250,113 +244,115 @@ string MysqlHelper::getVariables(const string &sName)
  
 void MysqlHelper::execute(const string& sSql)
 {
- /**
- 没有连上, 连接数据库
- */
- if(!_bConnected)
- {
- connect();
- }
+	/**
+	 没有连上, 连接数据库
+	*/
+	if(!_bConnected)
+	{
+		connect();
+	}
 
- _sLastSql = sSql;
- int iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
- if(iRet != 0)
- {
- /**
- 自动重新连接
- */
- int iErrno = mysql_errno(_pstMql);
- if (iErrno == 2013 || iErrno == 2006)
- {
- connect();
- iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
- }
- }
- 
- if (iRet != 0)
- {
- cout << "execute fail" << endl;
- throw MysqlHelper_Exception("[MysqlHelper::execute]: mysql_query: [ " + sSql+" ] :" + string(mysql_error(_pstMql))); 
- }
+	_sLastSql = sSql;
+	int iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
+	if(iRet != 0)
+	{
+		/**
+		 自动重新连接
+		*/
+		int iErrno = mysql_errno(_pstMql);
+		if (iErrno == 2013 || iErrno == 2006)
+		{
+			connect();
+			iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
+		}
+	}
+	
+	if (iRet != 0)
+	{
+#ifdef	DEBUG_COUT
+		cout << "execute fail" << endl;
+#endif
+		throw MysqlHelper_Exception("[MysqlHelper::execute]: mysql_query: [ " + sSql+" ] :" + string(mysql_error(_pstMql))); 
+	}
 }
 
 MysqlHelper::MysqlData MysqlHelper::queryRecord(const string& sSql)
 {
- MysqlData data;
+	MysqlData data;
 
- /**
- 没有连上, 连接数据库
- */
- if(!_bConnected)
- {
-	LogInfo(NULL);
-	connect();
- }
- LogInfo(NULL);
- _sLastSql = sSql;
- int iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
- if(iRet != 0)
- {
-	LogInfo(NULL);
 	/**
-	自动重新连接
+	 没有连上, 连接数据库
 	*/
-	int iErrno = mysql_errno(_pstMql);
-	if (iErrno == 2013 || iErrno == 2006 || iErrno == 4031)
+	if(!_bConnected)
 	{
 		LogInfo(NULL);
 		connect();
-		iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
 	}
-	LogRun("%s,data:%d","recv",iErrno);
- }
- LogInfo(NULL);
- if (iRet != 0)
- {
-	//问题根源，异常退出
-	LogRun("error : %s",(string(mysql_error(_pstMql))).c_str());
-	return data;
-    throw MysqlHelper_Exception("[MysqlHelper::execute]: mysql_query: [ " + sSql+" ] :" + string(mysql_error(_pstMql))); 
- }
-
- MYSQL_RES *pstRes = mysql_store_result(_pstMql);
- LogInfo(NULL);
- if(pstRes == NULL)
- {
 	LogInfo(NULL);
-	return data;
-    throw MysqlHelper_Exception("[MysqlHelper::queryRecord]: mysql_store_result: " + sSql + " : " + string(mysql_error(_pstMql)));
- }
- LogInfo(NULL);
- vector<string> vtFields;
- MYSQL_FIELD *field;
- while((field = mysql_fetch_field(pstRes)))
- {
-	vtFields.push_back(field->name);
- }
- LogInfo(NULL);
- map<string, string> mpRow;
- MYSQL_ROW stRow;
- LogInfo(NULL);
- while((stRow = mysql_fetch_row(pstRes)) != (MYSQL_ROW)NULL)
- {
-	 mpRow.clear();
-	 unsigned long * lengths = mysql_fetch_lengths(pstRes);
-	 for(size_t i = 0; i < vtFields.size(); i++)
-	 {
-		 if(stRow[i])
-		 {
-			mpRow[vtFields[i]] = string(stRow[i], lengths[i]);
-		 }
-		 else
-		 {
-			mpRow[vtFields[i]] = "";
-		 }
-	 }
-	 data.data().push_back(mpRow);
- }
- LogInfo(NULL);
- mysql_free_result(pstRes);
+	_sLastSql = sSql;
+	int iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
+	if(iRet != 0)
+	{
+		LogInfo(NULL);
+		/**
+		自动重新连接
+		*/
+		int iErrno = mysql_errno(_pstMql);
+		if (iErrno == 2013 || iErrno == 2006 || iErrno == 4031)
+		{
+			LogInfo(NULL);
+			connect();
+			iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
+		}
+		LogRun("%s,data:%d","recv",iErrno);
+	}
+	LogInfo(NULL);
+	if (iRet != 0)
+	{
+		//问题根源，异常退出
+		LogRun("error : %s",(string(mysql_error(_pstMql))).c_str());
+		return data;
+		throw MysqlHelper_Exception("[MysqlHelper::execute]: mysql_query: [ " + sSql+" ] :" + string(mysql_error(_pstMql))); 
+	}
+
+	MYSQL_RES *pstRes = mysql_store_result(_pstMql);
+	LogInfo(NULL);
+	if(pstRes == NULL)
+	{
+		LogInfo(NULL);
+		return data;
+		throw MysqlHelper_Exception("[MysqlHelper::queryRecord]: mysql_store_result: " + sSql + " : " + string(mysql_error(_pstMql)));
+	}
+	LogInfo(NULL);
+	vector<string> vtFields;
+	MYSQL_FIELD *field;
+	while((field = mysql_fetch_field(pstRes)))
+	{
+		vtFields.push_back(field->name);
+	}
+	LogInfo(NULL);
+	map<string, string> mpRow;
+	MYSQL_ROW stRow;
+	LogInfo(NULL);
+	while((stRow = mysql_fetch_row(pstRes)) != (MYSQL_ROW)NULL)
+	{
+		mpRow.clear();
+		unsigned long * lengths = mysql_fetch_lengths(pstRes);
+		for(size_t i = 0; i < vtFields.size(); i++)
+		{
+			if(stRow[i])
+			{
+				mpRow[vtFields[i]] = string(stRow[i], lengths[i]);
+			}
+			else
+			{
+				mpRow[vtFields[i]] = "";
+			}
+		}
+		data.data().push_back(mpRow);
+	}
+	LogInfo(NULL);
+	mysql_free_result(pstRes);
 
  return data;
 }

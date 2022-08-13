@@ -12,10 +12,13 @@
 #include "../Llib/cJSON.h"
 #include "../LMysql/mysqlhelper.h"
 #include "../Llib/base64.h"
+#include "../common_component/rapidjson/document.h"
+#include "../common_component/rapidjson/stringbuffer.h"
+#include "../common_component/rapidjson/writer.h"
 using namespace std;
 class Message{
 public:
-	char* messageAnalysis(const char* message);
+	std::string messageAnalysis(const char* message);
 	typedef enum {
 		KEEPLIVE_MAG = 0x00,
 		KEEPLIVE_SUCCESS = 0x01,
@@ -95,64 +98,64 @@ public:
 class Handler {
 public:   
     //处理请求的方法
-    virtual char* handleRequest(cJSON *dataitem) = 0;
+    virtual std::string handleRequest(rapidjson::Value& dataitem) = 0;
 };
 //连接心跳包信息处理者
 class KeepliveMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 
 //注册信息处理者
 class RegistMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 
 //登录信息处理者
 class LoginMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //发布博客信息处理者
 class PublishBlogMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //请求此用户所有博客信息处理者
 class RequestAllBlogMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //关键字搜索博客信息处理者
 class KeyWorkFindBlogMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //推荐博客信息处理者
 class RecommendBlogMagHandler : public Handler {
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //文件信息处理者
 class FileMsgHandler : public Handler{
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //资源下载信息处理者
 class ResourceDownloadHandler : public Handler{
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //修改笔记信息处理者
 class UpdateNoteHandler : public Handler{
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 //新建会话
 class CreateSessionHandler : public Handler{
 public:
-	virtual char* handleRequest(cJSON *dataitem);
+	virtual std::string handleRequest(rapidjson::Value& dataitem);
 };
 
 //执行者
@@ -167,7 +170,7 @@ public:
 	void setHandler(Handler *_handler){
 		this->handler = _handler;
 	}
-	char* execWork(cJSON *dataitem){
+	std::string execWork(rapidjson::Value& dataitem){
 		return this->handler->handleRequest(dataitem);
 	}
 private:

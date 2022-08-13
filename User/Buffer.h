@@ -190,6 +190,8 @@ public:
 			if(clientSok->send_data((void *)&headLen,sizeof(headLen)) == -1) return -1;
 			if(clientSok->send_data(data,headLen) == -1) return -1;
             LogInfo(NULL);
+			delete data;
+			data = NULL;
 			return headLen;
 		}
 	    	
