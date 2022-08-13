@@ -32,7 +32,9 @@ public:
 		if(clientSok->fd != -1)
 		{
 			LogInfo(NULL);
+#ifdef	DEBUG_COUT
 			cout << "客户端fd = "<< clientSok->fd  << "下线"<<endl;
+#endif
 			epoll_util::removefd(epollfd,clientSok->fd);
 			SocketFactory::destroy(clientSok);
 		}

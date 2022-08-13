@@ -49,6 +49,7 @@ void Logger::Stop()
  
     //等待时间线程结束
     spthread_->join();
+    fclose(fp_);
 }
  
 void Logger::AddToQueue(const char* pszLevel, const char* pszFile, int lineNo, const char* pszFuncSig,const char* pszFmt, ...)

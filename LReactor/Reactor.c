@@ -29,8 +29,8 @@ namespace LightOi
 	
 	void Reactor::stop()
 	{
-		EPollstop();
 		stopLoop();
+		EPollstop();
 	}
 	
 	void Reactor::stopLoop()

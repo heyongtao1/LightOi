@@ -8,8 +8,11 @@
 #define _SUBREACTORTHREAD_H
 #include <pthread.h>
 #include <exception>
+#include <thread>
+#include <memory>
 #include "Reactor.h"
 #include "../LSocket/socketimpl.h"
+#include "../common_component/debug/LDebug.h"
 using namespace socketfactory;
 /*
 	模板类并非真正的类，模板类的实现和定义必须在同一头文件中
@@ -25,12 +28,17 @@ namespace LightOi
 			{
 				throw std::exception();
 			}
+			
 			//将线程分离,任务执行完直接销毁
 			if(pthread_detach(_thread))
 			{
 				throw std::exception();
 			}
-			std::cout << "SubReactorThread start" <<std::endl;
+			LDebug::ldebug("SubReactorThread start");
+		}
+		~SubReactorThread()
+		{
+			
 		}
 
 	public:
@@ -60,7 +68,6 @@ namespace LightOi
 		int getTotalActiveNumber() { return _subReactor.getTotalActiveNumber(); }
 	private:
 		pthread_t _thread;
-		
 		T _subReactor;
 	};
 

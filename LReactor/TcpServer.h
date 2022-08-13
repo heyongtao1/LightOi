@@ -8,14 +8,17 @@
 #define _TCPSERVER_H
 #include <functional>
 #include <stdio.h>
+#include <memory>
+#include <iostream>
 #include "SubReactorThreadPoll.h"
 //#include "http_conn.h"
-#include "../User/blog.h"
+#include "../User/LJob.h"
 #include "../User/UDP_user.h"
 #include "../LMysql/connect_pool.h"
 #include "../Llib/Logger.h"
 #include "../LSocket/socketimpl.h"
-#define  NUMBER 30
+#include "../common_component/debug/LDebug.h"
+#include "../config.hpp"
 using namespace socketfactory;
 namespace LightOi
 {
@@ -25,6 +28,11 @@ namespace LightOi
 		: _mainReactor{address,port}
 		{
 			_mainReactor.setdisPatchCallbackFun(std::bind(&TcpServer::disPatchNewConnect,this,std::placeholders::_1));
+			_pool = std::make_shared<SubReactorThreadPool<HYT::LJob,UDP_user>>();
+		}
+		~TcpServer()
+		{
+			std::cout << "~TcpServer" << std::endl;
 		}
 	public:
 		/*all modular start function*/
@@ -39,7 +47,7 @@ namespace LightOi
 		void stop() 
 		{ 
 			_mainReactor.stop(); 
-			_pool.stopTotalSubReactor();
+			_pool->stopTotalSubReactor();
 			LogInfo(NULL);
 			Logger::GetInstance().Stop();
 		}
@@ -47,14 +55,16 @@ namespace LightOi
 		void disPatchNewConnect(SocketImpl*& clientSok);
 		
 		void printTestInfo()
-		{ _pool.printTotalActiveNumber(); }
+		{
+			_pool->printTotalActiveNumber(); 
+		}
 	private:
 		// Only responsible for new customer connection events
 		MainReactor _mainReactor;
 		/*In addition to connection events, it is only responsible for readable, 
 		writable and exception events */
-		SubReactorThreadPool<HYT::LJob,UDP_user> _pool;
-		
+		//SubReactorThreadPool<HYT::LJob,UDP_user> _pool;
+		std::shared_ptr<SubReactorThreadPool<HYT::LJob,UDP_user>> _pool;
 	};
 }
 #endif

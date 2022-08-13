@@ -1,10 +1,11 @@
 #ifndef _LWORKERTHREAD_H
 #define _LWORKERTHREAD_H
 #include "LThread.h"
-#include "../User/blog.h"
+#include "../User/LJob.h"
 #include "Llock.h"
 #include <mutex>
 #include <condition_variable>
+#include "../common_component/debug/LDebug.h"
 using namespace HYT;
 
 //线程状态
@@ -48,7 +49,7 @@ private:
 			if(lwthread->m_Job != nullptr)
 			lwthread->Run();
 		}
-		std::cout<<"WorkerThread Terminate" << std::endl;
+		LightOi::LDebug::ldebug("WorkerThread Terminate");
 		return NULL;
 	}
 public:
@@ -110,21 +111,16 @@ public:
 	{
 		if(job == nullptr) return ;
 		{
-			//std::cout << "setjob =======" << endl;
 			std::lock_guard<std::mutex> guard(m_varLocker);
-			//std::cout << "require lock" << endl;
 			this->m_Job = job;
 		}
 		m_isJobCond.notify_all();
-		//std::cout << "unlock" << endl;
 	}
 	void setThreadPool(LThreadPool<T>* threadpool)
 	{
 		if(threadpool == nullptr) return ;
 		{
-			//std::cout << "setThreadPool =======" << endl;
 			std::lock_guard<std::mutex> guard(m_varLocker);
-			//std::cout << "require lock" << endl;
 			this->m_threadPool = threadpool;
 		}
 	}

@@ -8,6 +8,7 @@
 #include "../Llib/Logger.h"
 #include "mysqlhelper.h"
 #include "../util/Singleton.h"
+#include <memory>
 using namespace mysqlhelper;
 
 using namespace std;
@@ -18,7 +19,7 @@ class connect_pool
 	public:
 		friend class Singleton<connect_pool>;
 
-		bool init(vector<MysqlHelper*> connect_ptrs)
+		bool init(vector<std::shared_ptr<MysqlHelper>> connect_ptrs)
 		{
 			if(connect_ptrs.empty())
 				return false;
@@ -74,17 +75,17 @@ class connect_pool
 			return index;
 		}
  
-		MysqlHelper* get_connect(int index)const
+		std::shared_ptr<MysqlHelper> get_connect(int index)const
 		{
 			pthread_mutex_lock(m_mutex);
 			if(index >= 0 && index < m_connect_vect.size())
 			{
 				LogInfo(NULL);
-				MysqlHelper* p = m_connect_vect[index];
+				std::shared_ptr<MysqlHelper> p = m_connect_vect[index];
 				pthread_mutex_unlock(m_mutex);
 				return p;
 			}
-			else pthread_mutex_unlock(m_mutex);
+			pthread_mutex_unlock(m_mutex);
 			LogInfo(NULL);
 			return NULL;
 		}
@@ -116,7 +117,7 @@ class connect_pool
 			pthread_mutex_unlock(m_mutex);
 		}
  
-		bool replace_alive_connect(MysqlHelper* new_connect, int index)
+		bool replace_alive_connect(std::shared_ptr<MysqlHelper> new_connect, int index)
 		{
 			bool ret = false;
 			pthread_mutex_lock(m_mutex);
@@ -140,24 +141,30 @@ class connect_pool
 		}
   		~connect_pool()
 		{
-			cout << "connect pool release" << endl;
 			if(NULL != m_mutex)
 			{
 				int size = m_connect_vect.size();
+				
 				for(int i=0;i<size;i++)
 				{
+					/*
 					MysqlHelper* demysql = m_connect_vect[i];
 					//关闭数据库连接
 					demysql->disconnect();
 					delete demysql;
 					demysql = NULL;
+					*/
+					m_connect_vect[i]->disconnect();
 				}
+				
 				m_connect_vect.clear();
 				//释放vector内存
-				vector<MysqlHelper*>(m_connect_vect).swap(m_connect_vect);
+				vector<std::shared_ptr<MysqlHelper>>(m_connect_vect).swap(m_connect_vect);
 				delete m_mutex;
 				m_mutex = NULL;
+#ifdef	DEBUG_COUT
 				cout << "mysql close" << endl;
+#endif
 			}
 		}
 
@@ -165,7 +172,7 @@ class connect_pool
 	private:
 		pthread_mutex_t *m_mutex;
 		vector<int> m_used_index_vect;
-		vector<MysqlHelper*> m_connect_vect;
+		vector<std::shared_ptr<MysqlHelper>> m_connect_vect;
 };
  
 #endif
