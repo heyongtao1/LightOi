@@ -6,18 +6,18 @@
 #include <unistd.h>
 using namespace std;
 
-LightOi::TcpServer server("172.22.63.3", 9999);
+shared_ptr<LightOi::TcpServer> server = make_shared<LightOi::TcpServer>("172.22.63.3", 9999);
 
 void term(int signal) {
 	//server.printTestInfo();
 	LogInfo(NULL);
-	server.stop();
+	server->stop();
 	sleep(5);
 }
 
 int main(int argc, char **argv)
 {
 	signal(SIGINT, term);
-	server.start();
+	server->start();
 	return 0;
 }

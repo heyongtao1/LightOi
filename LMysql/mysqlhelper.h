@@ -7,7 +7,6 @@
 #include <vector>
 #include <string>
 #include <mysql/mysql.h>
-
 using namespace std;
 
 namespace mysqlhelper
