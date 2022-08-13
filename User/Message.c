@@ -1,62 +1,63 @@
 ﻿#include "Message.h"
 #include <string.h>
+#include <memory>
 #include "../LMysql/connect_pool.h"
 #include "../util/Singleton.h"
 #include "../Llib/Logger.h"
-char* Message::messageAnalysis(const char* message){
+std::string Message::messageAnalysis(const char* message){
 	LogInfo(NULL);
-	char *retMag;
-	retMag = NULL;
-	//解析CJSON
-	cJSON *root = cJSON_Parse(message);
-	if(root == 0){
-		LogInfo(NULL);
-		return retMag;
+	rapidjson::Document doc(rapidjson::kObjectType);
+	{
+		if (doc.Parse(message).HasParseError()) {
+			return "";
+		}
 	}
-	cJSON *typeitem = cJSON_GetObjectItem(root,"type");
-	//printf("type : %d\n",typeitem->valueint);
-	cJSON *dataitem = cJSON_GetObjectItem(root,"data");
-	Executor *executor = new Executor();
-	switch(typeitem->valueint){
-		case Message::KEEPLIVE_MAG :
-								  executor->setHandler(new KeepliveMagHandler());break;  
-		case Message::REGIST_MAG : 
-								  executor->setHandler(new RegistMagHandler());break;  
-		case Message::LOGIN_MAG :
-								  executor->setHandler(new LoginMagHandler());break;	
-		case Message::BLOG_MAG  : 
-								  executor->setHandler(new PublishBlogMagHandler());break;
-		case Message::LOADBLOG_MAG:
-								  executor->setHandler(new RequestAllBlogMagHandler());break;
-		case Message::FINDBLOG_MAG:
-								  executor->setHandler(new KeyWorkFindBlogMagHandler());break;
-		case Message::RECOMBLOG_MAG:
-								  executor->setHandler(new RecommendBlogMagHandler());break;
-		case Message::FILE_MAG:
-								  executor->setHandler(new FileMsgHandler());break;
-		case Message::FILE_DOWNLOAD_MAG:
-								  executor->setHandler(new ResourceDownloadHandler());break;						  
-		case Message::UPDATE_NOTE_MAG:
-								  executor->setHandler(new UpdateNoteHandler());break;
-		case Message::CREATE_SESSION_MAG:
-								  executor->setHandler(new CreateSessionHandler());break;
+	if(doc.HasMember("type") && doc.HasMember("data") && doc["data"].IsObject())
+	{
+		int type = doc["type"].GetInt();
+		rapidjson::Value& data = doc["data"];
+		Executor *executor = new Executor();
+		switch(type){
+			case Message::KEEPLIVE_MAG :
+									executor->setHandler(new KeepliveMagHandler());break;  
+			case Message::REGIST_MAG : 
+									executor->setHandler(new RegistMagHandler());break;  
+			case Message::LOGIN_MAG :
+									executor->setHandler(new LoginMagHandler());break;	
+			case Message::BLOG_MAG  : 
+									executor->setHandler(new PublishBlogMagHandler());break;
+			case Message::LOADBLOG_MAG:
+									executor->setHandler(new RequestAllBlogMagHandler());break;
+			case Message::FINDBLOG_MAG:
+									executor->setHandler(new KeyWorkFindBlogMagHandler());break;
+			case Message::RECOMBLOG_MAG:
+									executor->setHandler(new RecommendBlogMagHandler());break;
+			case Message::FILE_MAG:
+									executor->setHandler(new FileMsgHandler());break;
+			case Message::FILE_DOWNLOAD_MAG:
+									executor->setHandler(new ResourceDownloadHandler());break;						  
+			case Message::UPDATE_NOTE_MAG:
+									executor->setHandler(new UpdateNoteHandler());break;
+			case Message::CREATE_SESSION_MAG:
+									executor->setHandler(new CreateSessionHandler());break;
+		}
+		std::string result = executor->execWork(data);
+		delete executor;
+		executor = NULL;
+		return result;
 	}
-	retMag = executor->execWork(dataitem);
-	delete(executor);
-	executor = NULL;
-	//释放根节点
-	cJSON_Delete(root);
-	return retMag;
+	return "";
 }
 
 //处理连接心跳包信息
-char* KeepliveMagHandler::handleRequest(cJSON *_dataitem){
+std::string KeepliveMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	LogInfo(NULL);
 	return NULL;
 }
 
 //处理注册信息
-char* RegistMagHandler::handleRequest(cJSON *_dataitem){
+std::string RegistMagHandler::handleRequest(rapidjson::Value& _dataitem){
+/*
 	LogInfo(NULL);
 	cJSON *usernamecJSON = cJSON_GetObjectItem(_dataitem,"username");
 	cJSON *passwordcJSON = cJSON_GetObjectItem(_dataitem,"password");
@@ -98,38 +99,39 @@ char* RegistMagHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;
+	*/
+	return NULL;
 }
 
 //处理登录信息
-char* LoginMagHandler::handleRequest(cJSON *_dataitem){
+std::string LoginMagHandler::handleRequest(rapidjson::Value& data){
 	LogInfo(NULL);
-	if(_dataitem == NULL) { cout << "_dataitem = null" <<endl;return NULL;}
-	cJSON *username = cJSON_GetObjectItem(_dataitem,"username");
-	cJSON *password = cJSON_GetObjectItem(_dataitem,"password");
+	std::string username,password;
+	{
+		username = data["username"].GetString();
+		password = data["password"].GetString();
+	}
+
 	int type;
 	int user_id = -1;
 	int index = Singleton<connect_pool>::getInstance().get_connect_index();
 	LogInfo(NULL);
 	//连接数达到上限
 	if(index == -1){
-		LogInfo(NULL);return NULL;
+		LogInfo(NULL);return "";
 	}
 	//判断该用户是否存在
 	string querySql = "select * from bloguser where user_name='";
-	querySql += username->valuestring;
+	querySql += username;
 	querySql += "\' and user_password='";
-	querySql += password->valuestring;
+	querySql += password;
 	querySql += "\'";//去掉; 
-	LogInfo(NULL);
-	MysqlHelper* mysqlcon = Singleton<connect_pool>::getInstance().get_connect(index);
+	std::shared_ptr<MysqlHelper> mysqlcon = Singleton<connect_pool>::getInstance().get_connect(index);
 	if(mysqlcon == NULL)
 	{
-		LogInfo(NULL);
-		return NULL;
+		return "";
 	}
-	LogInfo(NULL);	
 	if(mysqlcon->existRecord(querySql)){ //有问题
-		LogInfo(NULL);
 		type = Message::LOGIN_SUCCESS;//验证成功类型
 		//获取用户id
 		MysqlHelper::MysqlData dataSet;
@@ -138,7 +140,7 @@ char* LoginMagHandler::handleRequest(cJSON *_dataitem){
 		{
 			Singleton<connect_pool>::getInstance().remove_connect_from_pool(index);
 			LogInfo(NULL);
-			return NULL;
+			return "";
 		}		
 		user_id = atoi(dataSet[0]["user_id"].c_str());
 	}
@@ -148,24 +150,30 @@ char* LoginMagHandler::handleRequest(cJSON *_dataitem){
 	}
 	LogInfo(NULL);
 	//生成JSON
-	cJSON *creat_root = cJSON_CreateObject();
-	cJSON_AddNumberToObject(creat_root,"type",type);//登录成功类型
-	LogInfo(NULL);
-	cJSON *dataitem = cJSON_CreateObject();
-	cJSON_AddNumberToObject(dataitem,"userid",user_id);//登录成功返回用户ID
-	LogInfo(NULL);
-	cJSON_AddItemToObject(creat_root,"data",dataitem);
-	char *retbuf = cJSON_Print(creat_root);
-	LogInfo(NULL);
+	rapidjson::Document doc(rapidjson::kObjectType);
+	rapidjson::Document::AllocatorType& alloc = doc.GetAllocator();
+	{
+		doc.AddMember("type",type,alloc);//登录成功类型
+		rapidjson::Document data_obj(rapidjson::kObjectType);
+		{
+			data_obj.AddMember("userid",user_id,alloc);//登录成功返回用户ID
+		}
+		doc.AddMember("data",data_obj,alloc);
+	}
+	std::string result;
+	{
+		rapidjson::StringBuffer strBuf;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(strBuf);
+		doc.Accept(writer);
+		result = strBuf.GetString();
+	}
 	//释放数据库对象到连接池
 	Singleton<connect_pool>::getInstance().remove_connect_from_pool(index);
-	LogInfo(NULL);
-	//删除
-	cJSON_Delete(creat_root);
-	LogInfo(NULL);
-	return retbuf;
+	return result;
 }
-char* PublishBlogMagHandler::handleRequest(cJSON *_dataitem){
+
+std::string PublishBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
+	/*
 	LogInfo(NULL);
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	cJSON *blogtext = cJSON_GetObjectItem(_dataitem,"blogtext");
@@ -207,9 +215,12 @@ char* PublishBlogMagHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;
+	*/
+	return NULL;
 }
 
-char *UpdateNoteHandler::handleRequest(cJSON *_dataitem){
+std::string UpdateNoteHandler::handleRequest(rapidjson::Value& _dataitem){
+	/*
 	LogInfo(NULL);
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	cJSON *noteid = cJSON_GetObjectItem(_dataitem,"noteid");
@@ -237,16 +248,18 @@ char *UpdateNoteHandler::handleRequest(cJSON *_dataitem){
 	
 	pthread_rwlock_unlock(&rwlock);//解锁
 	Singleton<connect_pool>::getInstance().remove_connect_from_pool(index);
+	*/
 	return NULL;
 }
 
-char *CreateSessionHandler::handleRequest(cJSON *_dataitem){
+std::string CreateSessionHandler::handleRequest(rapidjson::Value& _dataitem){
 	
 	return NULL;
 }
 
-char *RecommendBlogMagHandler::handleRequest(cJSON *_dataitem){
-/*
+std::string RecommendBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
+	/*
+
 	LogInfo(NULL);
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	
@@ -287,12 +300,13 @@ char *RecommendBlogMagHandler::handleRequest(cJSON *_dataitem){
 	connect_pool::get_instance()->remove_connect_from_pool(index);
 	//删除
 	cJSON_Delete(creat_root);
-	return retbuf;*/
+	return retbuf;
+	*/
 	return NULL;
 }
 
-char *KeyWorkFindBlogMagHandler::handleRequest(cJSON *_dataitem){
-/*
+std::string KeyWorkFindBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
+	/*
 	cout << "KeyWorkFindBlogMagHandler::handleRequest()" <<endl;
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	cJSON *keywork = cJSON_GetObjectItem(_dataitem,"keyword");
@@ -334,11 +348,13 @@ char *KeyWorkFindBlogMagHandler::handleRequest(cJSON *_dataitem){
 	connect_pool::get_instance()->remove_connect_from_pool(index);
 	//删除
 	cJSON_Delete(creat_root);
-	return retbuf;*/
+	return retbuf;
+	*/
 	return NULL;
 }
-char *RequestAllBlogMagHandler::handleRequest(cJSON *_dataitem){
 
+std::string RequestAllBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
+	/*
 	cout << "RequestAllBlogMagHandler::handleRequest()" <<endl;
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 
@@ -377,6 +393,8 @@ char *RequestAllBlogMagHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;
+	*/
+	return NULL;
 }
 
 bool writePicFile(char *filename,int filesize,unsigned char *filetext)
@@ -401,8 +419,10 @@ bool writePicFile(char *filename,int filesize,unsigned char *filetext)
 	return NULL;
 }
 
+
 unsigned char * readPicFile(char *filename,int &filesize){
-	/*//文件指针
+	/*
+	//文件指针
 	FILE* fp;
 	//输入要读取的图像名
 	cout<<"Enter Image name:";
@@ -424,10 +444,12 @@ unsigned char * readPicFile(char *filename,int &filesize){
 	//将图像数据读入buffer
 	fread(ImgBuffer, filesize, 1, fp);
 	fclose(fp);
-	return ImgBuffer;*/
+	return ImgBuffer;
+	*/
 	return NULL;
 }
-char *ResourceDownloadHandler::handleRequest(cJSON *_dataitem){
+
+std::string ResourceDownloadHandler::handleRequest(rapidjson::Value& _dataitem){
 	/*
 	cout << "ResourceDownloadHandler::handleRequest()" <<endl;
 	cJSON *Jsonuserid = cJSON_GetObjectItem(_dataitem,"userid");
@@ -458,10 +480,11 @@ char *ResourceDownloadHandler::handleRequest(cJSON *_dataitem){
 	char *retbuf = cJSON_Print(creat_root);
 	//删除
 	cJSON_Delete(creat_root);
-	return retbuf;*/
+	return retbuf;
+	*/
 	return NULL;
 }
-char *FileMsgHandler::handleRequest(cJSON *_dataitem){
+std::string FileMsgHandler::handleRequest(rapidjson::Value& _dataitem){
 	/*
 	cout << "FileMsgHandler::handleRequest()" <<endl;
 	cJSON *Jsonuserid = cJSON_GetObjectItem(_dataitem,"userid");
@@ -470,7 +493,7 @@ char *FileMsgHandler::handleRequest(cJSON *_dataitem){
 	cJSON *Jsonfiletext = cJSON_GetObjectItem(_dataitem,"filetext");
 	cJSON *Jsonuploadtime = cJSON_GetObjectItem(_dataitem,"uploadtime");
 	cJSON *Jsonfiletype = cJSON_GetObjectItem(_dataitem,"filetype");
-	const char *filename = Jsonfilename->valuestring;
+	const char * filename = Jsonfilename->valuestring;
 	unsigned long filesize = static_cast<unsigned long>(Jsonfilesize->valueint);
 	const char *filetext = Jsonfiletext->valuestring;
 	const char *uploadtime = Jsonuploadtime->valuestring;
@@ -504,12 +527,14 @@ char *FileMsgHandler::handleRequest(cJSON *_dataitem){
 	//删除
 	cJSON_Delete(creat_root);
 	return retbuf;
-	*/
+	
 	//const string fromstring = filetext;
 	//cout<<"fromstring = " << fromstring.size()<<endl;
 	//unsigned char *pOut = new unsigned char[Jsonfilesize->valueint];
 	//解码 
 	//CBase64::Decode(fromstring,pOut,&filesize);
 	//int typeflag = writePicFile(filename,filesize,pOut);
+	*/
 	return NULL;
 }
+

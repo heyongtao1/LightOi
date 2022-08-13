@@ -9,6 +9,7 @@
 #include <iostream>
 #include <functional>
 #include "../LSocket/socketimpl.h"
+#include "../common_component/debug/LDebug.h"
 using namespace socketfactory;
 namespace LightOi
 {

@@ -36,7 +36,7 @@ namespace LightOi
 		
 		if(Singleton<Protect>::getInstance().isExistence(string(clientIp)))
 		{
-			cout << "黑名单 ip " <<endl;
+			LDebug::ldebug("黑名单 ip ");
 			SocketFactory::destroy(client);
 			return ;
 		}
