@@ -8,7 +8,11 @@ using namespace socketfactory;
 class User {
 public:
 	User():clientSok(nullptr){}
-	~User(){}
+	~User()
+	{
+		if(clientSok != nullptr)
+			close_conn();
+	}
 public:
 	void init(int _epollfd,SocketImpl*& _clientSok)
 	{
@@ -32,11 +36,12 @@ public:
 		if(clientSok->fd != -1)
 		{
 			LogInfo(NULL);
-#ifdef	DEBUG_COUT
+//#ifdef	DEBUG_COUT
 			cout << "客户端fd = "<< clientSok->fd  << "下线"<<endl;
-#endif
+//#endif
 			epoll_util::removefd(epollfd,clientSok->fd);
 			SocketFactory::destroy(clientSok);
+			clientSok = nullptr;
 		}
 	}
 	

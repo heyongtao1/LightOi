@@ -31,6 +31,7 @@ namespace LightOi
 	}
 	void Acceptor::handleAccept(ServerSocketImpl*& serverSok)
 	{
+		LogInfo(NULL);
 		SocketImpl* client = serverSok->accept();
 		char* clientIp = epoll_util::IP_tostring(client->address);
 		

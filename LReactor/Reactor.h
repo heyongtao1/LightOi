@@ -99,13 +99,14 @@ namespace LightOi
 	
 		~SubReactor()
 		{
-			for(auto it=users.begin();it != users.end();it++)
+			for(auto it=users.begin();it != users.end();)
 			{
 				delete it->second;
 				it->second = nullptr;
-				users.erase(it++);
+				it = users.erase(it);
 			}
 			users.clear();
+			std::cout << "~SubReactor()" << endl;
 		}
 
 		// loop epoll_wait

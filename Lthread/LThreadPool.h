@@ -2,8 +2,11 @@
 #define _LTHREADPOOL_H
 #include <algorithm>
 #include <vector>
+#include <queue>
 #include "LWorkerThread.h"
 #include "Llock.h"
+#include "../Llib/Logger.h"
+#include "../config.hpp"
 #include "../User/LJob.h"
 #include <mutex>
 #include <condition_variable>
@@ -12,237 +15,151 @@ using namespace HYT;
 template <typename T>
 class LThreadPool{
 public:
-	LThreadPool(int initThreadNum = 50)
+	LThreadPool(int initThreadNum = 10)
 	{
-		m_realIdleNum = m_initThreadNum = initThreadNum;
-		m_maxThreadNum = 100;
-		m_maxIdleNum = m_maxThreadNum - 10;
-		m_minIdleNum = (m_initThreadNum - 10) > 0 ? 10 : 5;
-
+		m_maxThreadNum = MAX_WTHREAD_NUMBER;
+		m_minThreadNum = MIN_WTHREAD_NUMBER;
+		if(initThreadNum > m_maxThreadNum || initThreadNum < m_minThreadNum)
+			initThreadNum = m_minThreadNum;
+		m_initThreadNum  = initThreadNum;
 		m_allThread.clear();
-		m_idleThread.clear();
-		m_busyThread.clear();
-
 		this->m_workId = 0;
-
-		createWorkThreadToIdleQueue(m_initThreadNum);
+		is_exit = false;
+		increaseThread(m_initThreadNum);
 	}
 	~LThreadPool()
 	{
-		TerminateAll();
-		m_allThread.clear();
-		m_idleThread.clear();
-		m_busyThread.clear();
-	}
-public:	
-	template <typename U> friend class LWorkerThread;
-public:
-	//将空闲线程加入到忙碌队列
-	void moveIdleThreadToBusyQueue(LWorkerThread<T>* idleThread)
-	{
-		if(idleThread == nullptr) return ;
-
-		{
-			std::lock_guard<std::mutex> gurad(m_idlequeLock);
-			auto pos = std::find(m_idleThread.begin(),m_idleThread.end(),idleThread);
-			if(pos != m_idleThread.end())
-			m_idleThread.erase(pos);
-		}
-		{
-			std::lock_guard<std::mutex> gurad(m_busyqueLock);
-			m_busyThread.push_back(idleThread);
-		}
-	}
-	//将忙碌线程加入到空闲队列
-	void moveBusyThreadToIdleQueue(LWorkerThread<T>* busyThread)
-	{
-		if(busyThread == nullptr) return ;
-
-		{
-			std::lock_guard<std::mutex> gurad(m_busyqueLock);
-			auto pos = std::find(m_busyThread.begin(),m_busyThread.end(),busyThread);
-			if(pos != m_busyThread.end())
-			m_busyThread.erase(pos);
-		}
-
-		{
-			std::lock_guard<std::mutex> gurad(m_idlequeLock);
-			m_idleThread.push_back(busyThread);
-		}
-		m_idlequeCond.notify_all();
-		m_maxThreadNumCond.notify_all();
-	}
-	//获取空闲线程
-	LWorkerThread<T>* getIdleThread()
-	{
-		std::unique_lock<std::mutex> gurad(m_idlequeLock);
-		while(m_idleThread.size() == 0)
-		{
-			m_idlequeCond.wait(gurad);
-		}
-
-		if(m_idleThread.size() > 0)
-		{
-			LWorkerThread<T>* idlethread = m_idleThread.front();
-			gurad.unlock();
-			return idlethread;
-		}
-
-		//获取失败
-		gurad.unlock();
-		return nullptr;
-	}
-	//增加一个工作线程到空闲队列
-	void appendWorkThreadToIdleQueue(LWorkerThread<T>* workthread)
-	{
-		if(workthread == nullptr) return ;
-		{
-			std::lock_guard<std::mutex> gurad(m_idlequeLock);
-			m_allThread.push_back(workthread);
-			m_idleThread.push_back(workthread);
-		}
-	}
-	//增加多个工作线程到空闲队列
-	void createWorkThreadToIdleQueue(int num)
-	{
-		{
-			std::lock_guard<std::mutex> gurad(m_idlequeLock);
-			for(int i=0;i<num;i++)
-			{
-				LWorkerThread<T>* workthread = new LWorkerThread<T>();
-				workthread->setThreadPool(this);
-
-				m_allThread.push_back(workthread);
-				m_idleThread.push_back(workthread);
-
-				workthread->Start();
-			}
-		}
-
-		m_idlequeCond.notify_all();
-		m_maxThreadNumCond.notify_all();
-	}
-	//从空闲队列删除多个空闲线程
-	void deleteWorkThreadFromIdleQueue(int num)
-	{
-		std::lock_guard<std::mutex> gurad(m_idlequeLock);
-		for(int i=0;i<num;i++)
-		{
-			LWorkerThread<T>* deltThread;
-			if(m_idleThread.size() > 0)
-			{
-				deltThread = m_idleThread.front();
-			}
-			else
-			break;
-			auto pos = std::find(m_idleThread.begin(),m_idleThread.end(),deltThread);
-			if(pos != m_idleThread.end())
-				m_idleThread.erase(pos);
-			//m_realIdleNum--;
-		}
-	}
-
-public:
-    void TerminateAll()
-	{
+		is_exit = true;
+		m_workCond.notify_all();
+		sleep(1);
 		for (int i=0; i<m_allThread.size(); ++i)
 		{
 			delete m_allThread[i];
 			m_allThread[i] = nullptr;
 		}
+		
 #ifdef  DEBUG_COUT
 		std::cout << "m_allThread.size() = " << m_allThread.size()<< std::endl;
-		std::cout << "realuseThread = " << m_idleThread.size() + m_busyThread.size()<< std::endl;
 #endif
+		m_allThread.clear();
+		vector<LWorkerThread<T>*>(m_allThread).swap(m_allThread);
+		m_workque = queue<T*>();
 	}
+public:	
+	template <typename U> friend class LWorkerThread;
+public:
+	static void* worker(void *arg)
+	{
+		LThreadPool* m_threadPool = (LThreadPool*)arg;
+		while(!m_threadPool->is_exit)
+		{
+			std::unique_lock<std::mutex> guard(m_threadPool->m_workLock);
+			while( !m_threadPool->is_exit && m_threadPool->m_workque.empty())
+			{
+				m_threadPool->m_workCond.wait(guard);
+			}
+			if(m_threadPool->is_exit) 
+			{
+				guard.unlock();
+				std::cout << "thread exit" << std::endl;
+				break;
+			}
+			if(!m_threadPool->m_workque.empty())
+			{
+				//取任务
+				auto job = m_threadPool->m_workque.front();
+				m_threadPool->m_workque.pop();
+				guard.unlock();
+				job->task();
+			}
+			else guard.unlock();
+		}
+		LightOi::LDebug::ldebug("WorkerThread Terminate");
+		return NULL;
+	}
+	//增加多个工作线程到空闲队列
+	void increaseThread(int num)
+	{
+		{
+			//std::lock_guard<std::mutex> guard(m_maxThreadNumLock);
+			for(int i=0;i<num;i++)
+			{
+				LWorkerThread<T>* workthread = new LWorkerThread<T>();
+				pthread_create(&workthread->m_pthreadId,NULL,worker,this);
+				workthread->setDetach(true);
+				pthread_detach(workthread->m_pthreadId);
+
+				m_allThread.push_back(workthread);
+			}
+			m_initThreadNum += num;
+		}
+	}
+	void  decreaseThread(int num)
+	{
+		{
+			std::lock_guard<std::mutex> guard(m_maxThreadNumLock);
+			for(int i=0;i<num;i++)
+			{
+
+			}
+		}
+	}
+
+public:
     void Run(T* job)
 	{
 		if(job == nullptr) return;
 		{
-			std::unique_lock<std::mutex> guard(m_maxThreadNumLock);
-			while(m_maxThreadNum <= m_busyThread.size())
 			{
-				m_maxThreadNumCond.wait(guard);
-			}		
-		}
-
-		int alluseThreadNum = m_busyThread.size() + m_idleThread.size();
-	
-		//负载过重，空闲线程少，需要创建新的线程, 使其空闲线程数目达到m_InitThreadNum
-		if(m_maxThreadNum > alluseThreadNum&& m_idleThread.size() < m_minIdleNum)
-		{
-			//注意：判断创建后线程总数是否大于m_maxThreadNum
-			//小于或等于m_maxThreadNum，则创建m_initThreadNum - m_idleThread.size()个线程，
-			//使得空闲线程数量达到m_initThreadNum
-			if(m_maxThreadNum > (alluseThreadNum + m_initThreadNum - m_idleThread.size()))
-			{
-				createWorkThreadToIdleQueue(m_initThreadNum - m_idleThread.size());
+				std::lock_guard<std::mutex> guard(m_workLock);
+				std::cout << m_workque.size() << std::endl;
+				if(MAX_WORK_NUMBER <= m_workque.size() && m_initThreadNum < m_maxThreadNum)
+				{
+					std::cout << "increase thread" << std::endl;
+					increaseThread(m_maxThreadNum - m_initThreadNum);
+				}
+				/*
+				else if(MAX_WORK_NUMBER <= m_workque.size() && m_initThreadNum >= m_maxThreadNum)
+				{
+					//拒绝策略，丢弃任务但不抛出异常，输出日志
+					std::cout << "refuse work" << std::endl;
+					LogInfo(NULL);
+					return ;
+				}
+				*/
+				m_workque.push(job);
 			}
-			else
-			{
-				createWorkThreadToIdleQueue(m_maxThreadNum - alluseThreadNum);
-			}
-		}
-		//获取空闲线程去执行任务
-		LWorkerThread<T>* workThread = getIdleThread();
-		if(workThread != nullptr)
-		{
-			workThread->m_workLocker.lock();
-			
-			moveIdleThreadToBusyQueue(workThread);
-			workThread->setThreadPool(this);
-			workThread->setLJob(job);
-			workThread->setWorkId(m_workId++);
-			workThread->m_workLocker.unlock();
+			m_workCond.notify_all();
 		}
 	}
 private:
 	//最大线程数
 	int m_maxThreadNum;
-	//最大空闲线程数
-	int m_maxIdleNum;
-	//最小空闲线程数
-	int m_minIdleNum;
-	//实际空闲线程数
-	int m_realIdleNum; // 介于m_minIdleNum 和 m_maxIdleNum之间
+	//最小线程数
+	int m_minThreadNum;
 	//初始化线程数
 	int m_initThreadNum;
 public:
-	void setMaxThreadNum(int maxThreadNum){ m_maxThreadNum = maxThreadNum;}
-	int  getMaxThreadNum() { return m_maxThreadNum; }
-	void setMaxIdleNum(int maxIdleNum){ m_maxIdleNum = maxIdleNum;}
-	int  getMaxIdleNum() { return m_maxIdleNum; }
-	void setMinIdleNum(int minIdleNum){ m_minIdleNum = minIdleNum;}
-	int  getMinIdleNum() { return m_minIdleNum; }
-	void setRealIdleNum(int realIdleNum){ m_realIdleNum = realIdleNum;}
-	int  getRealIdleNum() { return m_realIdleNum; }
-	void setInitThreadNum(int initThreadNum){ m_initThreadNum = initThreadNum;}
-	int  getInitThreadNum() { return m_initThreadNum; }
-public:
 	//所有线程的队列
 	std::vector<LWorkerThread<T>*> m_allThread;
-	//空闲线程的队列
-	std::vector<LWorkerThread<T>*> m_idleThread;
-	//忙碌线程的队列
-	std::vector<LWorkerThread<T>*> m_busyThread;
-private:
-	//保护空闲线程队列的互斥锁
-	std::mutex m_idlequeLock;
-	//保护忙碌线程队列的互斥锁
-	std::mutex m_busyqueLock;
-	//保护实际空闲线程的互斥锁
-	std::mutex m_realIdleNumLock;//已经废弃
+public:
 	//保护最大线程数的互斥锁
 	std::mutex m_maxThreadNumLock;
+	//任务队列的互斥锁
+	std::mutex m_workLock;
 	
-	//条件变量
-	std::condition_variable m_busyqueCond;
-	std::condition_variable m_idlequeCond;
 	//设置最大线程数的条件变量
 	std::condition_variable m_maxThreadNumCond;
+	//任务队列的条件变量
+	std::condition_variable m_workCond;
 	
+	//任务队列
+	std::queue<T*> m_workque;
+
 	//任务编号
 	unsigned int m_workId;
+
+	bool is_exit;
 };
 
 
