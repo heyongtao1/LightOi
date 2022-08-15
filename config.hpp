@@ -14,6 +14,9 @@
 #define SUBREACTOR_THREAD_MAX_NUM 5
 //数据库连接的大小
 #define  MYSQL_CONNECT_NUMBER 60
+
 #define UDP_THREAD_NUM 1
+//日志输出路径
+#define LOG_COUT_PATH "../log/server.log"
 
 #endif

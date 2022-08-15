@@ -1,6 +1,6 @@
 CC = g++
 src = $(wildcard ./*.c ./util/*.c ./User/*.c ./Lthread/Llock.c ./LSocket/*.c \
-./LSocket/UDP/*.c ./LReactor/*.c ./LMysql/*.c ./Llib/*.c \
+./LSocket/UDP/*.c ./LReactor/*.c ./LMysql/*.c ./Logger/*.c \
 ./common_component/rapidjson/*.c)
 obj = $(patsubst %.c, %.o, $(src))
 target = server
