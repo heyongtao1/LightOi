@@ -43,6 +43,7 @@ namespace LightOi
 		}
 		else
 			LDebug::ldebug("mysql connect_pool start success");
+		std::cout << "mysql connect all start success" << std::endl;
 	}
 
 }

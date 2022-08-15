@@ -76,7 +76,7 @@ namespace LightOi
 		{
 			for(int i=0;i<SUBREACTOR_THREAD_MAX_NUM;i++)
 				_subReactorThread[i].stopWork();
-			_udpReactorThread.stopWork();
+			//_udpReactorThread.stopWork();
 		}
 		
 		void printTotalActiveNumber()
@@ -87,7 +87,7 @@ namespace LightOi
 	private:
 		SubReactorThread<SubReactor<T>> _subReactorThread[SUBREACTOR_THREAD_MAX_NUM];
 		//std::vector<std::shared_ptr<SubReactorThread<SubReactor<T>>>> _subReactorThread;
-		SubReactorThread<UdpReactor<U>> _udpReactorThread;
+		//SubReactorThread<UdpReactor<U>> _udpReactorThread;
 		int last;
 	};
 }

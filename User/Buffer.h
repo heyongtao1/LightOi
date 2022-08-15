@@ -128,8 +128,12 @@ public:
 		memset(mpkgH.confirm,'\0',sizeof(mpkgH.confirm));
 		int ret;
 		//先接收确认值
-		if(recv(clientSok->fd,mpkgH.confirm,3,0) == -1) return -1;
-
+		ret = recv(clientSok->fd,mpkgH.confirm,3,0);
+		//若ret == -1则客户端下线
+		if(ret == -1 || ret < 3)
+		{
+			return -1;
+		} 
 		//确认值错误，则关闭连接
 		if(strcmp(mpkgH.confirm,"HYT")!= 0 && strcmp(mpkgH.confirm,"TST")!= 0)
 		{

@@ -11,7 +11,7 @@ namespace mysqlhelper{
 
 MysqlHelper::MysqlHelper():_bConnected(false)
 {
-
+	mysql_library_init(0, NULL, NULL);
 	_pstMql = mysql_init(NULL);
 }
 
@@ -84,6 +84,7 @@ void MysqlHelper::disconnect()
 	if (_pstMql != NULL)
 	{
 		mysql_close(_pstMql);
+		mysql_library_end();
 		_pstMql = NULL;
 	}
 
