@@ -286,55 +286,55 @@ MysqlHelper::MysqlData MysqlHelper::queryRecord(const string& sSql)
 	*/
 	if(!_bConnected)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		connect();
 	}
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	_sLastSql = sSql;
 	int iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
 	if(iRet != 0)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		/**
 		自动重新连接
 		*/
 		int iErrno = mysql_errno(_pstMql);
 		if (iErrno == 2013 || iErrno == 2006 || iErrno == 4031)
 		{
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			connect();
 			iRet = mysql_real_query(_pstMql, sSql.c_str(), sSql.length());
 		}
-		LogRun("%s,data:%d","recv",iErrno);
+		LOGRUN("%s,data:%d","recv",iErrno);
 	}
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	if (iRet != 0)
 	{
 		//问题根源，异常退出
-		LogRun("error : %s",(string(mysql_error(_pstMql))).c_str());
+		LOGRUN("error : %s",(string(mysql_error(_pstMql))).c_str());
 		return data;
 		throw MysqlHelper_Exception("[MysqlHelper::execute]: mysql_query: [ " + sSql+" ] :" + string(mysql_error(_pstMql))); 
 	}
 
 	MYSQL_RES *pstRes = mysql_store_result(_pstMql);
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	if(pstRes == NULL)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		return data;
 		throw MysqlHelper_Exception("[MysqlHelper::queryRecord]: mysql_store_result: " + sSql + " : " + string(mysql_error(_pstMql)));
 	}
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	vector<string> vtFields;
 	MYSQL_FIELD *field;
 	while((field = mysql_fetch_field(pstRes)))
 	{
 		vtFields.push_back(field->name);
 	}
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	map<string, string> mpRow;
 	MYSQL_ROW stRow;
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	while((stRow = mysql_fetch_row(pstRes)) != (MYSQL_ROW)NULL)
 	{
 		mpRow.clear();
@@ -352,7 +352,7 @@ MysqlHelper::MysqlData MysqlHelper::queryRecord(const string& sSql)
 		}
 		data.data().push_back(mpRow);
 	}
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	mysql_free_result(pstRes);
 
  return data;

@@ -4,8 +4,8 @@
 #include "LSocket/UDP/udp.h"
 #include "LSocket/socketfactory.h"
 #include "LThread/LThreadPoolManage.h"
-#include "User/LJob.h"
-#include "User/UDP_user.h"
+#include "LJob/LJob.h"
+#include "LJob/UDP_user.h"
 #include "Logger/Logger.h"
 #include "common_component/debug/LDebug.h"
 #include "config.hpp"
@@ -37,11 +37,11 @@ namespace LightOi
 			{
 				// 若没有监听到活动事件，则阻塞
 				int number = epoll_wait(epfd, events, MAX_CONN_EVENT_NUMBER, -1);
-				if(number == -1) LogError(NULL);
+				if(number == -1) LOGERROR(NULL);
 
 				for(int i=0;i<number;i++)
 				{
-					LogInfo(NULL);
+					LOGINFO(NULL);
 					LDebug::ldebug("udp msg");
 					int sockfd = events[i].data.fd;
 					//onReadable

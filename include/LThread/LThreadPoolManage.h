@@ -1,7 +1,7 @@
 #ifndef _LTHREADPOOLMANAGE_H
 #define _LTHREADPOOLMANAGE_H
 #include <memory>
-#include "User/LJob.h"
+#include "LJob/LJob.h"
 #include "LThreadPool.h"
 
 template <typename T>

@@ -6,7 +6,7 @@
 #include "LWorkerThread.h"
 #include "Logger/Logger.h"
 #include "config.hpp"
-#include "User/LJob.h"
+#include "LJob/LJob.h"
 #include <mutex>
 #include <condition_variable>
 using namespace HYT;
@@ -121,7 +121,7 @@ public:
 				{
 					//拒绝策略，丢弃任务但不抛出异常，输出日志
 					std::cout << "refuse work" << std::endl;
-					LogInfo(NULL);
+					LOGINFO(NULL);
 					return ;
 				}
 				*/

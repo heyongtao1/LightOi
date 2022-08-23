@@ -16,7 +16,7 @@ public:
 public:
 	void init(int _epollfd,SocketImpl*& _clientSok)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		epollfd = _epollfd;
 		clientSok = _clientSok;
 		epoll_util::addfd(epollfd,clientSok->fd,true);
@@ -35,16 +35,13 @@ public:
 	{
 		if(clientSok->fd != -1)
 		{
-			LogInfo(NULL);
-//#ifdef	DEBUG_COUT
+			LOGINFO(NULL);
 			cout << "客户端fd = "<< clientSok->fd  << "下线"<<endl;
-//#endif
 			epoll_util::removefd(epollfd,clientSok->fd);
 			SocketFactory::destroy(clientSok);
 			clientSok = nullptr;
 		}
 	}
-	
 	void task(){}
 public:
 	int epollfd;

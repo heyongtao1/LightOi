@@ -61,10 +61,7 @@ namespace LightOi
 			   to NewConnectCallback(newconfd)
 			*/
 			for(int i=0;i<number;i++)
-			{
 				_acceptor.handleAccept(serverSocket);
-			}
-			
 		}
 		SocketFactory::destroy(serverSocket);
 	}
@@ -73,6 +70,4 @@ namespace LightOi
 	{
 		_disPatchcb(clientSok);
 	}
-	
-
 }

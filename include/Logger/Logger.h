@@ -15,10 +15,10 @@
  
 //struct FILE;
  
-#define LogInfo(...)        Logger::GetInstance().AddToQueue("INFO", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
-#define LogWarning(...)     Logger::GetInstance().AddToQueue("WARNING", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
-#define LogError(...)       Logger::GetInstance().AddToQueue("ERROR", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
-#define LogRun(format ,...)	Logger::GetInstance().AddToQueue("Run", __FILE__, __LINE__, __PRETTY_FUNCTION__,format, __VA_ARGS__)
+#define LOGINFO(...)        Logger::GetInstance().AddToQueue("INFO", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
+#define LOGWARN(...)     Logger::GetInstance().AddToQueue("WARNING", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
+#define LOGERROR(...)       Logger::GetInstance().AddToQueue("ERROR", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
+#define LOGRUN(format ,...)	Logger::GetInstance().AddToQueue("Run", __FILE__, __LINE__, __PRETTY_FUNCTION__,format, __VA_ARGS__)
 class Logger
 {
 public:

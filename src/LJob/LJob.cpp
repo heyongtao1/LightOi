@@ -1,9 +1,10 @@
 ﻿#include "LJob.h"
 #include "Logger/Logger.h"
+#define  STRING_TEST "hello world!"
 namespace HYT{
 	bool LJob::read()
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		int savedErrno = 1;
 		int ret = buffer->readFd(clientSok,&savedErrno);
 		if( savedErrno == errno || ret < 0) return false;
@@ -12,27 +13,31 @@ namespace HYT{
 	
 	bool LJob::write()
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		int savedErrno = 1;
 		int ret = buffer->writeFd(clientSok,&savedErrno);
 		if( savedErrno == errno || ret == -1) return false;
-		//恢复可读状态
 		readable();
 		return true;
 	}
 	
 	void LJob::task()
 	{
-		LogInfo(NULL);
-		//获取包头,包体为int的包体长度
+		LOGINFO(NULL);
 		int head = buffer->readPackageHead();
-		//获取包体
 		auto data = buffer->readPackageBody(head);
-		auto result = Singleton<Message>::getInstance().messageAnalysis(data);
-		if(result == "")
+		std::string result;
 		{
-			//恢复可读状态
-			LogInfo(NULL);
+			#ifdef 	 ENABLE_MYSQL
+				result = Singleton<Message>::getInstance().messageAnalysis(data);
+			#else
+				result = STRING_TEST;
+			#endif	
+		}
+
+		if(result.empty())
+		{
+			LOGINFO(NULL);
 			readable();
 			return ;
 		}
@@ -49,13 +54,11 @@ namespace HYT{
 #else
 		{
 			//直接发送返回
-			if(clientSok->send_data((void*)&ret_head,sizeof(ret_head)) == -1) LogError(NULL);
-			if(clientSok->send_data(datas,strlen(datas)) == -1) LogError(NULL);
+			if(clientSok->send_data((void*)&ret_head,sizeof(ret_head)) == -1) LOGERROR(NULL);
+			if(clientSok->send_data(datas,strlen(datas)) == -1) LOGERROR(NULL);
 			readable();
 		}
 #endif
-		delete data;
-		data = NULL;
 	}
 
 }

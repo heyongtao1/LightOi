@@ -14,9 +14,7 @@
 #include "LSocket/socketimpl.h"
 #include "common_component/debug/LDebug.h"
 using namespace socketfactory;
-/*
-	模板类并非真正的类，模板类的实现和定义必须在同一头文件中
-*/
+
 namespace LightOi
 {
 	template <typename T>
@@ -24,51 +22,43 @@ namespace LightOi
 	public:
 		SubReactorThread()
 		{
-			if(pthread_create(&_thread, NULL, work, this)!=0)
-			{
+			if(pthread_create(&_thread, NULL, work, this)!=0){
 				throw std::exception();
 			}
-			
 			//将线程分离,任务执行完直接销毁
-			if(pthread_detach(_thread))
-			{
+			if(pthread_detach(_thread)){
 				throw std::exception();
 			}
 			LDebug::ldebug("SubReactorThread start");
 		}
-		~SubReactorThread()
-		{
-			
-		}
-
+		~SubReactorThread()=default;
 	public:
 		static void* work(void* arg)
 		{
-			SubReactorThread *pool = (SubReactorThread*)arg;
-			// 子Reactor不断循环监听
-			pool->run();
-			return pool;
+			SubReactorThread *reactor = (SubReactorThread*)arg;
+			reactor->run();
+			return reactor;
 		}
 		void run()
 		{
-			_subReactor.loop();
+			subreactor.loop();
 		}
 		
-		void stopWork()
+		void stop()
 		{
-			_subReactor.stop();
+			subreactor.stop();
 		}
 		
 		// 接口 ：新客户连接加入到子Reactor进行监听活动事件
 		void addNewConnectEvent(SocketImpl*& clientSok)
-		{ _subReactor.joinEPollEvent(clientSok); }
+		{ subreactor.joinEPollEvent(clientSok); }
 		
-		int getActiveNumber() { return _subReactor.getActiveNumber(); }
+		int getActiveNumber() { return subreactor.getActiveNumber(); }
 		
-		int getTotalActiveNumber() { return _subReactor.getTotalActiveNumber(); }
+		int getTotalActiveNumber() { return subreactor.getTotalActiveNumber(); }
 	private:
 		pthread_t _thread;
-		T _subReactor;
+		T subreactor;
 	};
 
 }

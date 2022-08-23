@@ -4,12 +4,7 @@
 template <class T>
 class LThread{
 public:
-	LThread()
-	{
-		m_isStart = false;
-		m_isTerminate = false;
-		m_isDetach = false;
-	}
+	LThread(bool isdetach = false):m_isStart(false),m_isTerminate(false),m_isDetach(isdetach){}
 	virtual ~LThread(){}
 public:	
 	//设置是否启动线程

@@ -18,14 +18,12 @@
 #include "Acceptor.h"
 #include "LSocket/socketfactory.h"
 #include "LThread/LThreadPoolManage.h"
-#include "User/LJob.h"
+#include "LJob/LJob.h"
 #include "Logger/Logger.h"
 #include "LSocket/UDP/udp.h"
 #include "config.hpp"
 
 using namespace socketfactory;
-//全局任务队列
-//static threadpool<http_conn> workthreadPoll;
 
 namespace LightOi
 {
@@ -62,9 +60,7 @@ namespace LightOi
 			// 设置已接收新连接的回调函数
 			_acceptor.setNewConnectCallbackFun(std::bind(&MainReactor::NewConnectCallback,this,std::placeholders::_1));
 		}
-		~MainReactor()
-		{
-		}
+		~MainReactor(){}
 	public:
 		void NewConnectCallback(SocketImpl*& clientSok);
 		// return listenfd
@@ -90,12 +86,8 @@ namespace LightOi
 	template<typename T>
 	class SubReactor : public Reactor{
 	public:
-		SubReactor()
-		{
-			activeNumber = totalActiveNumber = 0;
-			poolmanage = std::make_shared<LThreadPoolManage<HYT::LJob>>(MAX_THREAD_NUMBER);
-			//poolmanage = new LThreadPoolManage<HYT::LJob>(MAX_THREAD_NUMBER);
-		}
+		SubReactor():activeNumber(0),totalActiveNumber(0),\
+		poolmanage(std::make_shared<LThreadPoolManage<HYT::LJob>>(MAX_THREAD_NUMBER)){}
 	
 		~SubReactor()
 		{
@@ -119,61 +111,71 @@ namespace LightOi
 				int number = epoll_wait(epfd, events, MAX_CONN_EVENT_NUMBER, -1);
 				if(number == -1)
 				{
-					LogError(NULL);
+					LOGERROR(NULL);
+					continue;
 				}
-				if(number > 0)
 				for(int i=0;i<number;i++)
 				{
-					LogInfo(NULL);
+					LOGINFO(NULL);
 					int sockfd = events[i].data.fd;
 					//onReadable
 					if(events[i].events & EPOLLIN)
 					{
-						if(users[sockfd]->read())
-						{
-							poolmanage->addTask(users[sockfd]);
-							activeNumber++;
-							totalActiveNumber++;
-						}
-						else
-						{
-							// close client fd
-							LogInfo(NULL);
-							users[sockfd]->close_conn();
-							{
-								T* t = users[sockfd];
-								delete t;
-								t = nullptr;
-							}
-							users.erase(sockfd);
-							activeNumber--;
-						}
+						on_read(sockfd);
 					}
 					//onWriteable
 					else if(events[i].events & EPOLLOUT)
 					{
-						if(!users[sockfd]->write())
-						{
-							LogInfo(NULL);
-							users[sockfd]->close_conn();
-							{
-								T* t = users[sockfd];
-								delete t;
-								t = nullptr;
-							}
-							users.erase(sockfd);
-						}
-						activeNumber--;
+						on_write(sockfd);
 					}
 					// other Event
+					else {}
 				}
 			}
+		}
+	private:
+		void on_read(int fd)
+		{
+			if(users[fd]->read())
+			{
+				poolmanage->addTask(users[fd]);
+				activeNumber++;
+				totalActiveNumber++;
+			}
+			else
+			{
+				// close client fd
+				LOGINFO(NULL);
+				users[fd]->close_conn();
+				{
+					T* t = users[fd];
+					delete t;
+					t = nullptr;
+				}
+				users.erase(fd);
+				activeNumber--;
+			}
+		}
+		void on_write(int fd)
+		{
+			if(!users[fd]->write())
+			{
+				LOGINFO(NULL);
+				users[fd]->close_conn();
+				{
+					T* t = users[fd];
+					delete t;
+					t = nullptr;
+				}
+				users.erase(fd);
+			}
+			activeNumber--;
 		}
 	public:
 		// 加入新连接到监听事件中，接口
 		void joinEPollEvent(SocketImpl*& clientSok)
 		{ 
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			activeNumber++;
 			
 			T* t = new T();
@@ -189,10 +191,7 @@ namespace LightOi
 		// 活动请求数目
 		int activeNumber;
 		int totalActiveNumber;
-		// 计算线程池
-		//threadpool<HYT::LJob> workthreadPoll;
 		std::shared_ptr<LThreadPoolManage<HYT::LJob>> poolmanage;
-		//LThreadPoolManage<HYT::LJob>* poolmanage;
 	};
 }
 #endif
