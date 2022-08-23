@@ -10,7 +10,7 @@ shared_ptr<LightOi::TcpServer> server = make_shared<LightOi::TcpServer>("172.22.
 
 void term(int signal) {
 	//server.printTestInfo();
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	server->stop();
 	sleep(5);
 }

@@ -80,13 +80,13 @@ class connect_pool
 			pthread_mutex_lock(m_mutex);
 			if(index >= 0 && index < m_connect_vect.size())
 			{
-				LogInfo(NULL);
+				LOGINFO(NULL);
 				std::shared_ptr<MysqlHelper> p = m_connect_vect[index];
 				pthread_mutex_unlock(m_mutex);
 				return p;
 			}
 			pthread_mutex_unlock(m_mutex);
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			return NULL;
 		}
 		

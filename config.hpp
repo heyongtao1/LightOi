@@ -14,6 +14,12 @@
 #define SUBREACTOR_THREAD_MAX_NUM 5
 //数据库连接的大小
 #define  MYSQL_CONNECT_NUMBER 60
+//链接数据库信息 
+#define  MYSQL_CONNECT_IP "172.22.63.3"
+#define  MYSQL_USER_NAME "hyt"
+#define  MYSQL_USER_PASSWORD "123456"
+#define  MYSQL_DATABASE_NAME "Note"
+#define  MYSQL_SET_CHARATION "utf8"
 
 #define UDP_THREAD_NUM 1
 //日志输出路径

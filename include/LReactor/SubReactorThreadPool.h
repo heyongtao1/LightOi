@@ -21,16 +21,7 @@ namespace LightOi
 	template <typename T,typename U>
 	class SubReactorThreadPool{
 	public:
-		SubReactorThreadPool()
-		{
-			last = 0;
-			/*
-			for(int i=0;i<SUBREACTOR_THREAD_MAX_NUM;i++)
-			{
-				_subReactorThread.push_back(std::make_shared<SubReactorThread<SubReactor<T>>>());
-			}
-			*/
-		}
+		SubReactorThreadPool():last(0){}
 		~SubReactorThreadPool()
 		{
 			//_subReactorThread.clear();
@@ -59,7 +50,7 @@ namespace LightOi
 			}
 			
 			last = min_load_idx;		
-			LogInfo(NULL);
+			LOGINFO(NULL);
 #ifdef	DEBUG_COUT
 			std::cout << "activtNumber = " << _subReactorThread[min_load_idx].getActiveNumber() << std::endl;
 #endif
@@ -75,18 +66,17 @@ namespace LightOi
 		void stopTotalSubReactor()
 		{
 			for(int i=0;i<SUBREACTOR_THREAD_MAX_NUM;i++)
-				_subReactorThread[i].stopWork();
+				_subReactorThread[i].stop();
 			//_udpReactorThread.stopWork();
 		}
 		
 		void printTotalActiveNumber()
 		{
 			for(int i=0;i<SUBREACTOR_THREAD_MAX_NUM;i++)
-				std::cout << " i activeNumber = "  << std::endl;//<< _subReactorThread[i].getTotalActiveNumber()
+				std::cout << " i activeNumber = "<< _subReactorThread[i].getTotalActiveNumber()  << std::endl;
 		}
 	private:
 		SubReactorThread<SubReactor<T>> _subReactorThread[SUBREACTOR_THREAD_MAX_NUM];
-		//std::vector<std::shared_ptr<SubReactorThread<SubReactor<T>>>> _subReactorThread;
 		//SubReactorThread<UdpReactor<U>> _udpReactorThread;
 		int last;
 	};

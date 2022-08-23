@@ -69,11 +69,9 @@ public:
 	
 	const char* readPackageBody(int len)
 	{
-		char* str = (char*)malloc(sizeof(char)*(len+1));
-		memset(str,'\0',len+1);
-		strncpy(str,peek(),len);
+		auto result = peek();
 		hasReaden(len);
-		return str;
+		return result;
 	}
 
 	void append(const char* /*restrict*/ data, size_t len)
@@ -122,7 +120,7 @@ public:
 	// Read data directly into buffer.
 	ssize_t readFd(SocketImpl*& clientSok, int* savedErrno)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		int hasRecv = 0;
 		pkgH mpkgH;
 		memset(mpkgH.confirm,'\0',sizeof(mpkgH.confirm));
@@ -137,7 +135,7 @@ public:
 		//确认值错误，则关闭连接
 		if(strcmp(mpkgH.confirm,"HYT")!= 0 && strcmp(mpkgH.confirm,"TST")!= 0)
 		{
-			LogRun("recv confirm fail return -1,data:%s",mpkgH.confirm);
+			LOGRUN("recv confirm fail return -1,data:%s",mpkgH.confirm);
 			//加入黑名单，外来非法连接
 			char* clientIp = epoll_util::IP_tostring(clientSok->address);
 			Singleton<Protect>::getInstance().insertBlacklistSet(string(clientIp));
@@ -145,16 +143,16 @@ public:
 		}
 		if(strcmp(mpkgH.confirm,"TST") == 0)
 		{
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			mpkgH.len = 82;
 		}
 		else
 		{
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			again:
 			if((ret = recv(clientSok->fd,(char*)&mpkgH.len,sizeof(mpkgH.len),0)) == 0)
 			{
-				LogRun("%s","recv mpkgH.len fail return -1");
+				LOGRUN("%s","recv mpkgH.len fail return -1");
 				return -1;
 			}
 			else if(ret < 0)
@@ -181,24 +179,20 @@ public:
 	// Write data directly into socketclientSok->fd from buffer;
 	ssize_t writeFd(SocketImpl*& clientSok, int* savedErrno)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		struct iovec vec[1];
 		int hasWrite = 0;
 		int headLen = readPackageHead();
-
         {
 			if(readableBytes() < headLen) return 0;
-            auto data = readPackageBody(headLen);
-			cout << "send size = " << headLen <<endl;
-            cout << "send data = " << data <<endl;
+            auto data = readPackageBody(headLen);;
 			if(clientSok->send_data((void *)&headLen,sizeof(headLen)) == -1) return -1;
 			if(clientSok->send_data(data,headLen) == -1) return -1;
-            LogInfo(NULL);
+            LOGINFO(NULL);
 			delete data;
 			data = NULL;
 			return headLen;
 		}
-	    	
 	}
 private:
 	char* begin()
@@ -209,7 +203,7 @@ private:
 
 	void makeSpace(size_t len)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		if (writableBytes() + prependableBytes() < len + kCheapPrepend)
 		{
 		  // FIXME: move readable data

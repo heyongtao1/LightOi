@@ -10,11 +10,13 @@
 #include <stdio.h>
 #include <memory>
 #include <iostream>
-#include "SubReactorThreadPoll.h"
+#include "SubReactorThreadPool.h"
 //#include "http_conn.h"
-#include "User/LJob.h"
-#include "User/UDP_user.h"
+#include "LJob/LJob.h"
+#include "LJob/UDP_user.h"
+#ifdef 	 ENABLE_MYSQL
 #include "LMysql/connect_pool.h"
+#endif
 #include "Logger/Logger.h"
 #include "LSocket/socketimpl.h"
 #include "common_component/debug/LDebug.h"
@@ -30,15 +32,14 @@ namespace LightOi
 			_mainReactor.setdisPatchCallbackFun(std::bind(&TcpServer::disPatchNewConnect,this,std::placeholders::_1));
 			_pool = std::make_shared<SubReactorThreadPool<HYT::LJob,UDP_user>>();
 		}
-		~TcpServer()
-		{
-			std::cout << "~TcpServer" << std::endl;
-		}
+		~TcpServer(){}
 	public:
 		/*all modular start function*/
 		void start();
+#ifdef 	 ENABLE_MYSQL
 		/* mysql connect pool start*/
 		void startMySqlConnectPool();
+#endif
 		/* Logger work thread start*/
 		void startLogger();
 		/* mainReactor loop start*/
@@ -48,16 +49,13 @@ namespace LightOi
 		{ 
 			_mainReactor.stop(); 
 			_pool->stopTotalSubReactor();
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			Logger::GetInstance().Stop();
 		}
 		/*Callback function disPatch new Connect*/
 		void disPatchNewConnect(SocketImpl*& clientSok);
 		
-		void printTestInfo()
-		{
-			_pool->printTotalActiveNumber(); 
-		}
+		void printTestInfo(){_pool->printTotalActiveNumber(); }
 	private:
 		// Only responsible for new customer connection events
 		MainReactor _mainReactor;

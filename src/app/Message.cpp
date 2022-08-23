@@ -5,7 +5,7 @@
 #include "util/Singleton.h"
 #include "Logger/Logger.h"
 std::string Message::messageAnalysis(const char* message){
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	rapidjson::Document doc(rapidjson::kObjectType);
 	{
 		if (doc.Parse(message).HasParseError()) {
@@ -51,14 +51,14 @@ std::string Message::messageAnalysis(const char* message){
 
 //处理连接心跳包信息
 std::string KeepliveMagHandler::handleRequest(rapidjson::Value& _dataitem){
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	return NULL;
 }
 
 //处理注册信息
 std::string RegistMagHandler::handleRequest(rapidjson::Value& _dataitem){
 /*
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	cJSON *usernamecJSON = cJSON_GetObjectItem(_dataitem,"username");
 	cJSON *passwordcJSON = cJSON_GetObjectItem(_dataitem,"password");
 	char *username = usernamecJSON->valuestring;
@@ -105,7 +105,7 @@ std::string RegistMagHandler::handleRequest(rapidjson::Value& _dataitem){
 
 //处理登录信息
 std::string LoginMagHandler::handleRequest(rapidjson::Value& data){
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	std::string username,password;
 	{
 		username = data["username"].GetString();
@@ -115,10 +115,10 @@ std::string LoginMagHandler::handleRequest(rapidjson::Value& data){
 	int type;
 	int user_id = -1;
 	int index = Singleton<connect_pool>::getInstance().get_connect_index();
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	//连接数达到上限
 	if(index == -1){
-		LogInfo(NULL);return "";
+		LOGINFO(NULL);return "";
 	}
 	//判断该用户是否存在
 	string querySql = "select * from bloguser where user_name='";
@@ -139,7 +139,7 @@ std::string LoginMagHandler::handleRequest(rapidjson::Value& data){
 		if(dataSet.size() == 0)
 		{
 			Singleton<connect_pool>::getInstance().remove_connect_from_pool(index);
-			LogInfo(NULL);
+			LOGINFO(NULL);
 			return "";
 		}		
 		user_id = atoi(dataSet[0]["user_id"].c_str());
@@ -148,7 +148,7 @@ std::string LoginMagHandler::handleRequest(rapidjson::Value& data){
 	{
 		type = Message::LOGIN_FAIL;//验证失败类型
 	}
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	//生成JSON
 	rapidjson::Document doc(rapidjson::kObjectType);
 	rapidjson::Document::AllocatorType& alloc = doc.GetAllocator();
@@ -174,7 +174,7 @@ std::string LoginMagHandler::handleRequest(rapidjson::Value& data){
 
 std::string PublishBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	/*
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	cJSON *blogtext = cJSON_GetObjectItem(_dataitem,"blogtext");
 	cJSON *bloghead = cJSON_GetObjectItem(_dataitem,"bloghead");
@@ -221,7 +221,7 @@ std::string PublishBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
 
 std::string UpdateNoteHandler::handleRequest(rapidjson::Value& _dataitem){
 	/*
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	cJSON *noteid = cJSON_GetObjectItem(_dataitem,"noteid");
 	cJSON *blogtext = cJSON_GetObjectItem(_dataitem,"blogtext");
@@ -260,7 +260,7 @@ std::string CreateSessionHandler::handleRequest(rapidjson::Value& _dataitem){
 std::string RecommendBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	/*
 
-	LogInfo(NULL);
+	LOGINFO(NULL);
 	cJSON *userid = cJSON_GetObjectItem(_dataitem,"userid");
 	
 	int index = connect_pool::get_instance()->get_connect_index();

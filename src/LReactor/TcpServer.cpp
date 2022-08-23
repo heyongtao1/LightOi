@@ -11,7 +11,9 @@ namespace LightOi
 	void TcpServer::start()
 	{
 		startLogger();
+#ifdef 	 ENABLE_MYSQL
 		startMySqlConnectPool();
+#endif
 		/* 阻塞函数 */
 		startMainReactor(); 
 	}
@@ -26,18 +28,18 @@ namespace LightOi
 		Logger::GetInstance().SetFileName(LOG_COUT_PATH);
 		Logger::GetInstance().Start();
 	}
-	
+#ifdef 	 ENABLE_MYSQL
 	void TcpServer::startMySqlConnectPool()
 	{
 		//创建连接池中的连接个数
 		vector<std::shared_ptr<MysqlHelper>> m_databases;
 		for(int i=0;i<MYSQL_CONNECT_NUMBER;i++){
 			std::shared_ptr<MysqlHelper> mysqlHelper = std::make_shared<MysqlHelper>();
-			mysqlHelper->init("172.22.63.3","hyt","123456","Note","utf8");//uniLJob
+			mysqlHelper->init(MYSQL_CONNECT_IP,MYSQL_USER_NAME,MYSQL_USER_PASSWORD,MYSQL_DATABASE_NAME,MYSQL_SET_CHARATION);
 			mysqlHelper->connect();
 			m_databases.push_back(mysqlHelper);
 		}
-		
+
 		if(!Singleton<connect_pool>::getInstance().init(m_databases)){
 			LDebug::ldebug("connect_pool init fail");
 		}
@@ -45,5 +47,5 @@ namespace LightOi
 			LDebug::ldebug("mysql connect_pool start success");
 		std::cout << "mysql connect all start success" << std::endl;
 	}
-
+#endif
 }

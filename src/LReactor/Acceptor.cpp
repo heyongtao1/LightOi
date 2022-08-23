@@ -31,7 +31,7 @@ namespace LightOi
 	}
 	void Acceptor::handleAccept(ServerSocketImpl*& serverSok)
 	{
-		LogInfo(NULL);
+		LOGINFO(NULL);
 		SocketImpl* client = serverSok->accept();
 		char* clientIp = epoll_util::IP_tostring(client->address);
 		
@@ -42,7 +42,7 @@ namespace LightOi
 			return ;
 		}
 		
-		LogRun("%s",clientIp);
+		LOGRUN("%s",clientIp);
 		
 		if(client->fd < 0)
 		{
