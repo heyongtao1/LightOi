@@ -11,14 +11,14 @@
 编译工具：cmake
 
 编译流程：
-# mysql使用ENABLE_MYSQL宏控制
-# 不使用mysql编译如下：
+## mysql使用ENABLE_MYSQL宏控制
+## 不使用mysql编译如下：
 mkdir build
 cd build
 cmake ..
 make
 
-# 使用mysql，启动-DENABLE_MYSQL=ON ， 前提ubuntu需要安装mysql
+## 使用mysql，启动-DENABLE_MYSQL=ON ， 前提ubuntu需要安装mysql
 mkdir build
 cd build 
 cmake .. -DENABLE_MYSQL=ON
