@@ -69,9 +69,11 @@ public:
 	
 	const char* readPackageBody(int len)
 	{
-		auto result = peek();
+		char* body = new char[len];
+		memset(body,'\0',len);
+		strncpy(body,peek(),len);
 		hasReaden(len);
-		return result;
+		return body;
 	}
 
 	void append(const char* /*restrict*/ data, size_t len)
