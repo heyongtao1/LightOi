@@ -25,7 +25,7 @@ namespace HYT{
 	{
 		LOGINFO(NULL);
 		int head = buffer->readPackageHead();
-		auto data = buffer->readPackageBody(head);
+		const char* data = buffer->readPackageBody(head);
 		std::string result;
 		{
 			#ifdef 	 ENABLE_MYSQL
@@ -39,6 +39,8 @@ namespace HYT{
 		{
 			LOGINFO(NULL);
 			readable();
+			delete data;
+			data = nullptr;
 			return ;
 		}
 		const char* datas = result.c_str();
@@ -59,6 +61,8 @@ namespace HYT{
 			readable();
 		}
 #endif
+		delete data;
+		data = nullptr;
 	}
 
 }

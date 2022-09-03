@@ -69,7 +69,7 @@ public:
 	
 	const char* readPackageBody(int len)
 	{
-		char* body = new char[len];
+		char* body = new char[len+1];
 		memset(body,'\0',len);
 		strncpy(body,peek(),len);
 		hasReaden(len);

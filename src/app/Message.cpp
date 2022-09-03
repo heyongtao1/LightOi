@@ -52,7 +52,7 @@ std::string Message::messageAnalysis(const char* message){
 //处理连接心跳包信息
 std::string KeepliveMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	LOGINFO(NULL);
-	return NULL;
+	return "";
 }
 
 //处理注册信息
@@ -100,7 +100,7 @@ std::string RegistMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	cJSON_Delete(creat_root);
 	return retbuf;
 	*/
-	return NULL;
+	return "";
 }
 
 //处理登录信息
@@ -216,7 +216,7 @@ std::string PublishBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	cJSON_Delete(creat_root);
 	return retbuf;
 	*/
-	return NULL;
+	return "";
 }
 
 std::string UpdateNoteHandler::handleRequest(rapidjson::Value& _dataitem){
@@ -249,12 +249,12 @@ std::string UpdateNoteHandler::handleRequest(rapidjson::Value& _dataitem){
 	pthread_rwlock_unlock(&rwlock);//解锁
 	Singleton<connect_pool>::getInstance().remove_connect_from_pool(index);
 	*/
-	return NULL;
+	return "";
 }
 
 std::string CreateSessionHandler::handleRequest(rapidjson::Value& _dataitem){
 	
-	return NULL;
+	return "";
 }
 
 std::string RecommendBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
@@ -302,7 +302,7 @@ std::string RecommendBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
 	cJSON_Delete(creat_root);
 	return retbuf;
 	*/
-	return NULL;
+	return "";
 }
 
 std::string KeyWorkFindBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
@@ -350,7 +350,7 @@ std::string KeyWorkFindBlogMagHandler::handleRequest(rapidjson::Value& _dataitem
 	cJSON_Delete(creat_root);
 	return retbuf;
 	*/
-	return NULL;
+	return "";
 }
 
 std::string RequestAllBlogMagHandler::handleRequest(rapidjson::Value& _dataitem){
@@ -394,7 +394,7 @@ std::string RequestAllBlogMagHandler::handleRequest(rapidjson::Value& _dataitem)
 	cJSON_Delete(creat_root);
 	return retbuf;
 	*/
-	return NULL;
+	return "";
 }
 
 bool writePicFile(char *filename,int filesize,unsigned char *filetext)
@@ -416,7 +416,7 @@ bool writePicFile(char *filename,int filesize,unsigned char *filetext)
 	//关闭文件指针，释放buffer内存
 	fclose(fp);
 	return true;*/
-	return NULL;
+	return "";
 }
 
 
@@ -482,7 +482,7 @@ std::string ResourceDownloadHandler::handleRequest(rapidjson::Value& _dataitem){
 	cJSON_Delete(creat_root);
 	return retbuf;
 	*/
-	return NULL;
+	return "";
 }
 std::string FileMsgHandler::handleRequest(rapidjson::Value& _dataitem){
 	/*
@@ -535,6 +535,6 @@ std::string FileMsgHandler::handleRequest(rapidjson::Value& _dataitem){
 	//CBase64::Decode(fromstring,pOut,&filesize);
 	//int typeflag = writePicFile(filename,filesize,pOut);
 	*/
-	return NULL;
+	return "";
 }
 

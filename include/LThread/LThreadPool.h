@@ -110,7 +110,7 @@ public:
 		{
 			{
 				std::lock_guard<std::mutex> guard(m_workLock);
-				std::cout << m_workque.size() << std::endl;
+				//std::cout << m_workque.size() << std::endl;
 				if(MAX_WORK_NUMBER <= m_workque.size() && m_initThreadNum < m_maxThreadNum)
 				{
 					std::cout << "increase thread" << std::endl;

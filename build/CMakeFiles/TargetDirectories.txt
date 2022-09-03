@@ -1,7 +1,0 @@
-/mnt/share/LightOi/build/CMakeFiles/rebuild_cache.dir
-/mnt/share/LightOi/build/CMakeFiles/edit_cache.dir
-/mnt/share/LightOi/build/CMakeFiles/server.dir
-/mnt/share/LightOi/build/src/CMakeFiles/rebuild_cache.dir
-/mnt/share/LightOi/build/src/CMakeFiles/edit_cache.dir
-/mnt/share/LightOi/build/src/CMakeFiles/logger.dir
-/mnt/share/LightOi/build/src/CMakeFiles/base64.dir
